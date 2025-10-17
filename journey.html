@@ -16,7 +16,7 @@
             font-family: 'Patrick Hand', cursive;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px 10px;
+       
         }
     /* Navigation */
 .navbar {
@@ -133,6 +133,7 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            margin-top: 10px;
             padding: 0 10px;
         }
 
@@ -466,6 +467,66 @@
             font-family: 'Dancing Script', cursive;
             font-size: 2em;
             margin-bottom: 10px;
+        }
+        
+        /* Small screens: prevent timeline cards from exceeding viewport */
+        @media screen and (max-width: 499px) {
+            .timeline {
+                padding-left: 18px;
+            }
+
+            /* move the vertical line closer to the content but not overlapping */
+            .timeline::before {
+                left: 36px; /* shifted right */
+            }
+
+            .timeline::after {
+                left: 28px;
+            }
+
+            .timeline-item {
+                width: auto;
+                margin: 0 8px 20px 64px; /* account for the moved line */
+                flex-direction: column !important;
+                align-items: stretch;
+            }
+
+            .timeline-item .date-marker {
+                align-self: flex-start;
+                min-width: 50px;
+                font-size: 0.85em;
+                margin-bottom: 8px;
+                margin-left: -8px; /* nudge date marker a bit toward the line */
+            }
+
+            .timeline-content {
+                border-left: none;
+                border-right: none;
+                padding: 12px;
+                font-size: 1em;
+                overflow-wrap: anywhere; /* ensure long words or URLs wrap */
+                word-break: break-word;
+            }
+
+            .timeline-content::before {
+                left: -40px; /* move the heart marker so it sits near the vertical line */
+                right: auto;
+                top: 12px;
+            }
+
+            /* ensure modal and buttons fit on tiny screens */
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .add-timeline-btn {
+                right: 18px;
+                bottom: 20px;
+                width: 56px;
+                height: 56px;
+                font-size: 1.6em;
+            }
         }
     </style>
 </head>

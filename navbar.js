@@ -14,7 +14,7 @@ const navbarHTML = `
       <a href="diary.html">📖 Memories</a>
       <a href="journey.html">⏳ Timeline</a>
       <a href="galery.html">📸 Gallery</a>
-      <a href="schedule.html">💑 Schedules</a>
+      <a href="SCHEDULE.HTML">💑 Schedules</a>
       <a href="letters.html">💌 Letters</a>
     </div>
   </div>
@@ -124,6 +124,20 @@ const navbarHTML = `
 
 // Insert navbar at the top of the body
 document.body.insertAdjacentHTML("afterbegin", navbarHTML);
+
+// Adjust body padding to account for the fixed navbar height so page headers aren't hidden
+function adjustBodyPaddingForNavbar() {
+  const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+  // Use offsetHeight which includes padding
+  const navHeight = navbar.offsetHeight;
+  // Apply padding-top to body so content starts below the navbar
+  document.body.style.paddingTop = navHeight + 'px';
+}
+
+// Run on load and when the window is resized (to handle responsive navbar height)
+window.addEventListener('load', adjustBodyPaddingForNavbar);
+window.addEventListener('resize', adjustBodyPaddingForNavbar);
 
 // Activate the hamburger menu toggle
 document.addEventListener("DOMContentLoaded", () => {
