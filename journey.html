@@ -618,12 +618,35 @@
     let timelineEvents = [];
     let currentUser = null;
     let currentUserName = null;
+    let currentAuthor = 'albert'; // Default author
 
     // Check authentication state
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
-            currentUserName = user.displayName; // Get Albert or Tinah from displayName
+            
+            // Wait for user data to be fully loaded
+            await user.reload();
+            
+            // Get the displayName - handle null case
+            currentUserName = user.displayName ? user.displayName.toLowerCase() : null;
+            
+            console.log('🔥 User logged in:', {
+                email: user.email,
+                displayName: user.displayName,
+                currentUserName: currentUserName
+            });
+            
+            // If displayName is still null, use fallback
+            if (!currentUserName) {
+                console.warn('⚠️ displayName is null, using email fallback');
+                currentUserName = user.email ? (user.email.toLowerCase().includes('albert') ? 'albert' : 'tinah') : 'unknown';
+                console.log('🔄 Using fallback username:', currentUserName);
+            }
+            
+            // Set current author based on logged in user
+            currentAuthor = currentUserName;
+            
             loadTimelineEvents();
             setupRealtimeUpdates();
         } else {
@@ -632,7 +655,7 @@
         }
     });
 
-    // Load timeline events from Firebase - REMOVED user filtering
+    // Load timeline events from Firebase
     async function loadTimelineEvents() {
         try {
             const q = query(
@@ -646,6 +669,7 @@
                 ...doc.data()
             }));
             
+            console.log('📝 Loaded timeline events:', timelineEvents);
             updateTimeline();
         } catch (error) {
             console.error("Error loading timeline events: ", error);
@@ -653,7 +677,7 @@
         }
     }
 
-    // Set up real-time updates - REMOVED user filtering
+    // Set up real-time updates
     function setupRealtimeUpdates() {
         const q = query(
             collection(db, 'timelineEvents'),
@@ -680,7 +704,7 @@
         document.getElementById('timelineEventForm').reset();
     }
 
-    // Form Submission
+    // Form Submission - FIXED VERSION
     document.getElementById('timelineEventForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -690,25 +714,46 @@
         submitBtn.disabled = true;
 
         try {
-            const author = document.querySelector('input[name="eventAuthor"]:checked').value;
-            
+            // Get form values
+            const date = document.getElementById('eventDate').value;
+            const title = document.getElementById('eventTitle').value;
+            const description = document.getElementById('eventDescription').value;
+
+            // Validate required fields
+            if (!date || !title || !description) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            console.log('💾 Preparing to save event:', {
+                date: date,
+                title: title,
+                description: description,
+                author: currentAuthor
+            });
+
             const eventData = {
-                date: document.getElementById('eventDate').value,
-                title: document.getElementById('eventTitle').value,
-                description: document.getElementById('eventDescription').value,
-                author: author, // Store who created this event
+                date: date,
+                title: title,
+                description: description,
+                author: currentAuthor, // Use the current logged-in user as author
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             };
 
-            await addDoc(collection(db, 'timelineEvents'), eventData);
+            console.log('💾 Saving event data:', eventData);
+            
+            // Save to Firebase
+            const docRef = await addDoc(collection(db, 'timelineEvents'), eventData);
+            console.log('✅ Event saved with ID:', docRef.id);
             
             closeTimelineModal();
             alert('Timeline event added successfully! 💕');
             
         } catch (error) {
-            console.error("Error saving timeline event: ", error);
-            alert('Error saving timeline event. Please try again.');
+            console.error("❌ Error saving timeline event: ", error);
+            console.error("Error details:", error.message, error.code);
+            alert('Error saving timeline event: ' + error.message);
         } finally {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
@@ -717,6 +762,8 @@
 
     // Update Timeline Display
     function updateTimeline() {
+        console.log('🔄 Updating timeline display with events:', timelineEvents);
+        
         const container = document.getElementById('timelineContainer');
         
         if (timelineEvents.length === 0) {
@@ -739,6 +786,8 @@
 
             const isEven = index % 2 === 0;
             const authorClass = event.author ? event.author.toLowerCase() : '';
+            
+            console.log(`📄 Rendering event: ${event.title} by ${event.author}`);
             
             return `
                 <div class="timeline-item" style="animation-delay: ${0.1 * (index + 1)}s">
