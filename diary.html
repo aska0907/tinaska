@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Love Diary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .logo span {
+            color: #ff6b6b;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: #764ba2;
+            color: white;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 80px auto 20px;
+            padding: 20px;
+        }
+
+        /* Header */
+        .diary-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .diary-header h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            color: #764ba2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .diary-header p {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        /* Add Memory Button */
+        .add-memory-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff6b6b, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .add-memory-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* Memories Grid */
+        .memories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        /* Memory Card */
+        .memory-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+            min-height: 200px;
+        }
+
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .memory-card.albert {
+            border-left: 5px solid #667eea;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        }
+
+        .memory-card.tinah {
+            border-left: 5px solid #ff6b6b;
+            background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%);
+        }
+
+        .memory-card.tinaska {
+            border-left: 5px solid #764ba2;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f0ff 100%);
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #e0e0e0;
+        }
+
+        .memory-author {
+            font-weight: bold;
+            font-size: 1.1em;
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .memory-author.albert {
+            color: #667eea;
+        }
+
+        .memory-author.tinah {
+            color: #ff6b6b;
+        }
+
+        .memory-author.tinaska {
+            color: #764ba2;
+        }
+
+        .memory-mood {
+            font-size: 1.5em;
+        }
+
+        .memory-date {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .memory-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #333;
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .memory-content {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .memory-media {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .memory-media img, .memory-media video {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #764ba2;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.3em;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Patrick Hand', cursive;
+            transition: border-color 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #764ba2;
+            background: white;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        /* Author Selection */
+        .author-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .author-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .author-btn.active {
+            border-color: #764ba2;
+            background: #764ba2;
+            color: white;
+        }
+
+        /* Mood Selection */
+        .mood-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .mood-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .mood-btn.active {
+            border-color: #764ba2;
+            background: #764ba2;
+            color: white;
+        }
+
+        /* Media Upload */
+        .media-upload {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .media-upload:hover {
+            border-color: #764ba2;
+            background: #f0f4ff;
+        }
+
+        #media-preview {
+            margin-top: 15px;
+            display: none;
+        }
+
+        #media-preview img, #media-preview video {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 10px;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state h3 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #764ba2;
+        }
+
+        /* Floating Hearts */
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-hearts span {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.2;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .memories-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                gap: 15px;
+            }
+            
+            .author-options, .mood-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .diary-header h1 {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+  <script src="navbar.js"></script>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="diary-header">
+            <h1>Our Beautiful Memories</h1>
+            <p>Every moment with you is a treasure 💕</p>
+        </div>
+
+        <!-- Memories Grid -->
+        <div class="memories-grid" id="memoriesGrid">
+            <!-- Memories will be dynamically added here -->
+            <div class="empty-state">
+                <h3>No memories yet</h3>
+                <p>Click the + button to create your first memory!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Memory Button -->
+    <button class="add-memory-btn" onclick="openMemoryModal()">+</button>
+
+    <!-- Add Memory Modal -->
+    <div class="modal" id="memoryModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeMemoryModal()">×</span>
+            <h2 style="font-family: 'Dancing Script', cursive; color: #764ba2; margin-bottom: 20px; text-align: center;">Add New Memory</h2>
+            
+            <form id="diaryEntryForm">
+                <div class="form-group">
+                    <label>Who's writing?</label>
+                    <div class="author-options">
+                        <div class="author-btn active" data-author="Albert">Albert</div>
+                        <div class="author-btn" data-author="Tinah">Tinah</div>
+                        <div class="author-btn" data-author="Tinaska">Tinaska</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="entryDate">Date</label>
+                    <input type="date" id="entryDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="entryTitle">Memory Title</label>
+                    <input type="text" id="entryTitle" placeholder="What makes this moment special?" required>
+                </div>
+
+                <div class="form-group">
+                    <label>How are you feeling?</label>
+                    <div class="mood-options">
+                        <div class="mood-btn active" data-mood="😊">😊</div>
+                        <div class="mood-btn" data-mood="😍">😍</div>
+                        <div class="mood-btn" data-mood="😂">😂</div>
+                        <div class="mood-btn" data-mood="😢">😢</div>
+                        <div class="mood-btn" data-mood="🤩">🤩</div>
+                        <div class="mood-btn" data-mood="😴">😴</div>
+                        <div class="mood-btn" data-mood="🤗">🤗</div>
+                        <div class="mood-btn" data-mood="🥰">🥰</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="entryContent">Your Memory</label>
+                    <textarea id="entryContent" placeholder="Write from your heart... 💖" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Add Photo/Video</label>
+                    <div class="media-upload" onclick="document.getElementById('mediaFile').click()">
+                        <div style="font-size: 2em;">📷</div>
+                        <p>Click to add a photo or video</p>
+                        <small>JPG, PNG, MP4, MOV</small>
+                        <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
+                    </div>
+                    <div id="media-preview"></div>
+                </div>
+
+                <button type="submit" class="submit-btn">💾 Save Memory</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Hearts -->
+    <div class="floating-hearts">
+        <span style="left:10%; animation-delay:0s;">💖</span>
+        <span style="left:20%; animation-delay:1s;">💕</span>
+        <span style="left:30%; animation-delay:2s;">❤️</span>
+        <span style="left:40%; animation-delay:3s;">💗</span>
+        <span style="left:60%; animation-delay:4s;">💓</span>
+        <span style="left:80%; animation-delay:5s;">💝</span>
+    </div>
+
+<script type="module">
+    // Import Firebase
+    import { firebaseConfig } from './firebase-config.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        getDocs, 
+        query, 
+        orderBy, 
+        serverTimestamp,
+        onSnapshot 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { 
+        getAuth, 
+        onAuthStateChanged 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+    import { 
+        getStorage, 
+        ref, 
+        uploadBytes, 
+        getDownloadURL 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    // Initialize variables
+    let currentAuthor = 'Albert';
+    let currentMood = '😊';
+    let currentUser = null;
+    let entries = [];
+
+    // Check authentication state
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            loadDiaryEntries();
+            setupRealtimeUpdates();
+        } else {
+            // Redirect to login if not authenticated
+            window.location.href = 'index.html';
+        }
+    });
+
+    // Load diary entries from Firebase - REMOVED user filtering
+    async function loadDiaryEntries() {
+        try {
+            const q = query(
+                collection(db, 'diaryEntries'),
+                orderBy('createdAt', 'desc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            entries = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            updateMemoriesGrid();
+        } catch (error) {
+            console.error("Error loading diary entries: ", error);
+            alert('Error loading memories. Please refresh the page.');
+        }
+    }
+
+    // Set up real-time updates - REMOVED user filtering
+    function setupRealtimeUpdates() {
+        const q = query(
+            collection(db, 'diaryEntries'),
+            orderBy('createdAt', 'desc')
+        );
+        
+        onSnapshot(q, (snapshot) => {
+            entries = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            updateMemoriesGrid();
+        });
+    }
+
+    // Upload file to Firebase Storage
+    async function uploadMediaFile(file) {
+        try {
+            // Create a unique file name
+            const fileExtension = file.name.split('.').pop();
+            const fileName = `diary/${currentUser.uid}/${Date.now()}.${fileExtension}`;
+            const storageRef = ref(storage, fileName);
+            
+            // Upload file
+            const snapshot = await uploadBytes(storageRef, file);
+            
+            // Get download URL
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            return downloadURL;
+        } catch (error) {
+            console.error("Error uploading file: ", error);
+            throw new Error('Failed to upload media file');
+        }
+    }
+
+    // Modal Functions
+    function openMemoryModal() {
+        document.getElementById('memoryModal').style.display = 'block';
+        document.getElementById('entryDate').valueAsDate = new Date();
+    }
+
+    function closeMemoryModal() {
+        document.getElementById('memoryModal').style.display = 'none';
+        document.getElementById('diaryEntryForm').reset();
+        document.getElementById('media-preview').style.display = 'none';
+        document.querySelectorAll('.mood-btn')[0].click();
+        document.querySelectorAll('.author-btn')[0].click();
+    }
+
+    // Author Selection
+    document.querySelectorAll('.author-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.author-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentAuthor = this.dataset.author;
+        });
+    });
+
+    // Mood Selection
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentMood = this.dataset.mood;
+        });
+    });
+
+    // Media Upload Preview
+    let selectedFile = null;
+    document.getElementById('mediaFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        selectedFile = file;
+        const preview = document.getElementById('media-preview');
+        
+        if (file) {
+            preview.style.display = 'block';
+            if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview">`;
+            } else if (file.type.startsWith('video/')) {
+                preview.innerHTML = `<video controls><source src="${URL.createObjectURL(file)}" type="${file.type}"></video>`;
+            }
+        }
+    });
+
+    // Form Submission
+    document.getElementById('diaryEntryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+
+        try {
+            let mediaUrl = null;
+            let mediaType = null;
+
+            // Upload media file if selected
+            if (selectedFile) {
+                mediaUrl = await uploadMediaFile(selectedFile);
+                mediaType = selectedFile.type;
+            }
+
+            // Create diary entry in Firebase - REMOVED userId
+            const entryData = {
+                author: currentAuthor,
+                date: document.getElementById('entryDate').value,
+                title: document.getElementById('entryTitle').value,
+                mood: currentMood,
+                content: document.getElementById('entryContent').value,
+                mediaUrl: mediaUrl,
+                mediaType: mediaType,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'diaryEntries'), entryData);
+            
+            closeMemoryModal();
+            selectedFile = null;
+            alert('Memory saved successfully! 💕');
+            
+        } catch (error) {
+            console.error("Error saving diary entry: ", error);
+            alert('Error saving memory. Please try again.');
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Update Memories Grid
+    function updateMemoriesGrid() {
+        const container = document.getElementById('memoriesGrid');
+        
+        if (entries.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No memories yet</h3>
+                    <p>Click the + button to create your first memory!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = entries.map(entry => {
+            // Convert Firestore timestamp to Date if needed
+            const entryDate = entry.date || (entry.createdAt ? entry.createdAt.toDate() : new Date());
+            
+            return `
+                <div class="memory-card ${entry.author.toLowerCase()}">
+                    <div class="memory-header">
+                        <div class="memory-author ${entry.author.toLowerCase()}">${entry.author}</div>
+                        <div class="memory-mood">${entry.mood}</div>
+                    </div>
+                    <div class="memory-date">${new Date(entryDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}</div>
+                    <div class="memory-title">${entry.title}</div>
+                    <div class="memory-content">${entry.content}</div>
+                    ${entry.mediaUrl ? `
+                        <div class="memory-media">
+                            ${entry.mediaType.startsWith('image/') ? 
+                                `<img src="${entry.mediaUrl}" alt="Memory" style="max-width: 100%; max-height: 200px; border-radius: 10px;">` : 
+                                `<video controls style="max-width: 100%; max-height: 200px; border-radius: 10px;">
+                                    <source src="${entry.mediaUrl}" type="${entry.mediaType}">
+                                </video>`
+                            }
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('memoryModal');
+        if (e.target === modal) {
+            closeMemoryModal();
+        }
+    });
+
+    // Make functions global for HTML onclick attributes
+    window.openMemoryModal = openMemoryModal;
+    window.closeMemoryModal = closeMemoryModal;
+</script>
+</body>
+</html>
