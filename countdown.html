@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Special Countdowns</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: #764ba2;
+            color: white;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 10px auto 20px;
+            padding: 20px;
+        }
+
+        /* Header */
+        .countdown-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .countdown-header h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Special Days Since Card */
+        .days-since-card {
+            background: linear-gradient(135deg, #ff6b6b, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .days-since-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .days-since-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .days-since-date {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .time-since-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .time-since-unit {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 10px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .time-since-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .time-since-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .days-since-message {
+            font-style: italic;
+            font-size: 1.1em;
+            margin-top: 20px;
+            opacity: 0.9;
+        }
+
+        /* Add Countdown Button */
+        .add-countdown-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff6b6b, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .add-countdown-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* Countdowns Grid */
+        .countdowns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        /* Countdown Card */
+        .countdown-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .countdown-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .countdown-card.anniversary {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%);
+        }
+
+        .countdown-card.birthday {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        }
+
+        .countdown-card.vacation {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fff0 100%);
+        }
+
+        .countdown-card.special {
+            border-color: #FFC107;
+            background: linear-gradient(135deg, #ffffff 0%, #fffbf0 100%);
+        }
+
+        .countdown-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2em;
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+
+        .countdown-date {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .countdown-timer {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .time-unit {
+            background: rgba(118, 75, 162, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(118, 75, 162, 0.2);
+        }
+
+        .time-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #764ba2;
+            display: block;
+        }
+
+        .time-label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .countdown-message {
+            font-style: italic;
+            color: #888;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .days-until {
+            background: #764ba2;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #764ba2;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.3em;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .category-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .category-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active {
+            border-color: #764ba2;
+            background: #764ba2;
+            color: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state h3 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        /* Floating Hearts */
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-hearts span {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.2;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <script src="navbar.js"></script>
+
+    <div class="container">
+        <div class="countdown-header">
+            <h1>Our Special Countdowns ⏰</h1>
+            <p style="color: white; font-size: 1.2em;">Counting down to our beautiful moments</p>
+        </div>
+
+        <!-- Time Since We Met Card -->
+        <div class="days-since-card" id="timeSinceWeMet">
+            <div class="days-since-title">Time Since We Date 💕</div>
+            <div class="days-since-date">Since August 4, 2025</div>
+            
+            <div class="time-since-grid">
+                <div class="time-since-unit">
+                    <span class="time-since-number" id="yearsSince">0</span>
+                    <span class="time-since-label">Years</span>
+                </div>
+                <div class="time-since-unit">
+                    <span class="time-since-number" id="monthsSince">0</span>
+                    <span class="time-since-label">Months</span>
+                </div>
+                <div class="time-since-unit">
+                    <span class="time-since-number" id="weeksSince">0</span>
+                    <span class="time-since-label">Weeks</span>
+                </div>
+                <div class="time-since-unit">
+                    <span class="time-since-number" id="daysSince">0</span>
+                    <span class="time-since-label">Days</span>
+                </div>
+                <div class="time-since-unit">
+                    <span class="time-since-number" id="hoursSince">0</span>
+                    <span class="time-since-label">Hours</span>
+                </div>
+            </div>
+            
+            <div class="days-since-message">Every moment with you is precious! 💖</div>
+        </div>
+
+        <div class="countdowns-grid" id="countdownsGrid">
+            <div class="empty-state">
+                <h3>No countdowns yet</h3>
+                <p>Click the + button to add your first countdown!</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-countdown-btn" onclick="openCountdownModal()">+</button>
+
+    <!-- Add Countdown Modal -->
+    <div class="modal" id="countdownModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCountdownModal()">×</span>
+            <h2 style="font-family: 'Dancing Script', cursive; color: #764ba2; margin-bottom: 20px; text-align: center;">Add Countdown</h2>
+            
+            <form id="countdownForm">
+                <div class="form-group">
+                    <label for="countdownTitle">What are we counting down to?</label>
+                    <input type="text" id="countdownTitle" placeholder="Our Anniversary, Tinah's Birthday, Vacation..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="countdownDate">When is it?</label>
+                    <input type="date" id="countdownDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <div class="category-options">
+                        <div class="category-btn active" data-category="anniversary">💕 Anniversary</div>
+                        <div class="category-btn" data-category="birthday">🎂 Birthday</div>
+                        <div class="category-btn" data-category="vacation">✈️ Vacation</div>
+                        <div class="category-btn" data-category="special">🌟 Special Day</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="countdownMessage">Special Message (optional)</label>
+                    <textarea id="countdownMessage" placeholder="Why is this day special? 💖"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">💝 Start Countdown</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Hearts -->
+    <div class="floating-hearts">
+        <span style="left:10%; animation-delay:0s;">💖</span>
+        <span style="left:20%; animation-delay:1s;">💕</span>
+        <span style="left:30%; animation-delay:2s;">❤️</span>
+        <span style="left:40%; animation-delay:3s;">💗</span>
+    </div>
+
+<script type="module">
+    import { firebaseConfig } from './firebase-config.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        getDocs, 
+        query, 
+        where, 
+        orderBy,
+        onSnapshot,
+        serverTimestamp,
+        deleteDoc,
+        doc 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { 
+        getAuth, 
+        onAuthStateChanged 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let countdowns = [];
+    let currentUser = null;
+    let currentCategory = 'anniversary';
+
+    // Set the date when you met
+    const metDate = new Date('August 4, 2025');
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            startTimeSinceTimer();
+            loadCountdowns();
+            setupRealtimeUpdates();
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // Time Since We Met Timer
+    function startTimeSinceTimer() {
+        function updateTimeSince() {
+            const now = new Date();
+            const diffTime = now - metDate;
+            
+            // Calculate total units
+            const totalHours = Math.floor(diffTime / (1000 * 60 * 60));
+            const totalDays = Math.floor(totalHours / 24);
+            const totalWeeks = Math.floor(totalDays / 7);
+            
+            // Calculate years and remaining months
+            const startYear = metDate.getFullYear();
+            const currentYear = now.getFullYear();
+            let years = currentYear - startYear;
+            
+            const startMonth = metDate.getMonth();
+            const currentMonth = now.getMonth();
+            let months = currentMonth - startMonth;
+            
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            
+            // Adjust months if the current day is before the start day
+            const startDay = metDate.getDate();
+            const currentDay = now.getDate();
+            if (currentDay < startDay) {
+                months--;
+                if (months < 0) {
+                    years--;
+                    months += 12;
+                }
+            }
+            
+            // Calculate remaining days after years and months
+            const tempDate = new Date(metDate);
+            tempDate.setFullYear(metDate.getFullYear() + years);
+            tempDate.setMonth(metDate.getMonth() + months);
+            
+            const remainingDays = Math.floor((now - tempDate) / (1000 * 60 * 60 * 24));
+            const remainingWeeks = Math.floor(remainingDays / 7);
+            const remainingDaysAfterWeeks = remainingDays % 7;
+            const remainingHours = totalHours % 24;
+
+            // Update display
+            document.getElementById('yearsSince').textContent = years;
+            document.getElementById('monthsSince').textContent = months;
+            document.getElementById('weeksSince').textContent = remainingWeeks;
+            document.getElementById('daysSince').textContent = remainingDaysAfterWeeks;
+            document.getElementById('hoursSince').textContent = remainingHours;
+        }
+
+        // Update immediately
+        updateTimeSince();
+        
+        // Update every second
+        setInterval(updateTimeSince, 1000);
+    }
+
+    async function loadCountdowns() {
+        try {
+            const q = query(
+                collection(db, 'countdowns'),
+                where('userId', '==', currentUser.uid),
+                orderBy('targetDate', 'asc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            countdowns = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            updateCountdownsDisplay();
+            startCountdownTimers();
+        } catch (error) {
+            console.error("Error loading countdowns: ", error);
+        }
+    }
+
+    function setupRealtimeUpdates() {
+        const q = query(
+            collection(db, 'countdowns'),
+            where('userId', '==', currentUser.uid),
+            orderBy('targetDate', 'asc')
+        );
+        
+        onSnapshot(q, (snapshot) => {
+            countdowns = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            updateCountdownsDisplay();
+            startCountdownTimers();
+        });
+    }
+
+    function openCountdownModal() {
+        document.getElementById('countdownModal').style.display = 'block';
+        document.getElementById('countdownDate').valueAsDate = new Date();
+    }
+
+    function closeCountdownModal() {
+        document.getElementById('countdownModal').style.display = 'none';
+        document.getElementById('countdownForm').reset();
+        document.querySelectorAll('.category-btn')[0].click();
+    }
+
+    // Category Selection
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.category;
+        });
+    });
+
+    // Form Submission
+    document.getElementById('countdownForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('.submit-btn');
+        submitBtn.textContent = 'Creating...';
+        submitBtn.disabled = true;
+
+        try {
+            const countdownData = {
+                title: document.getElementById('countdownTitle').value,
+                targetDate: document.getElementById('countdownDate').value,
+                category: currentCategory,
+                message: document.getElementById('countdownMessage').value,
+                userId: currentUser.uid,
+                createdAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'countdowns'), countdownData);
+            
+            closeCountdownModal();
+            alert('Countdown created! 💕');
+            
+        } catch (error) {
+            console.error("Error creating countdown: ", error);
+            alert('Error creating countdown. Please try again.');
+        } finally {
+            submitBtn.textContent = '💝 Start Countdown';
+            submitBtn.disabled = false;
+        }
+    });
+
+    function updateCountdownsDisplay() {
+        const container = document.getElementById('countdownsGrid');
+        
+        if (countdowns.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No countdowns yet</h3>
+                    <p>Click the + button to add your first countdown!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = countdowns.map(countdown => {
+            const targetDate = new Date(countdown.targetDate);
+            const now = new Date();
+            const diffTime = targetDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const formattedDate = targetDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let daysText = '';
+            if (diffDays === 0) {
+                daysText = 'Today! 🎉';
+            } else if (diffDays === 1) {
+                daysText = 'Tomorrow! 💫';
+            } else if (diffDays < 0) {
+                daysText = `${Math.abs(diffDays)} days ago 💖`;
+            } else {
+                daysText = `${diffDays} days to go!`;
+            }
+
+            return `
+                <div class="countdown-card ${countdown.category}" data-id="${countdown.id}">
+                    <div class="countdown-title">${countdown.title}</div>
+                    <div class="countdown-date">${formattedDate}</div>
+                    
+                    <div class="countdown-timer" id="timer-${countdown.id}">
+                        <div class="time-unit">
+                            <span class="time-number" id="days-${countdown.id}">0</span>
+                            <span class="time-label">Days</span>
+                        </div>
+                        <div class="time-unit">
+                            <span class="time-number" id="hours-${countdown.id}">0</span>
+                            <span class="time-label">Hours</span>
+                        </div>
+                        <div class="time-unit">
+                            <span class="time-number" id="minutes-${countdown.id}">0</span>
+                            <span class="time-label">Minutes</span>
+                        </div>
+                        <div class="time-unit">
+                            <span class="time-number" id="seconds-${countdown.id}">0</span>
+                            <span class="time-label">Seconds</span>
+                        </div>
+                    </div>
+                    
+                    <div class="days-until">${daysText}</div>
+                    
+                    ${countdown.message ? `
+                        <div class="countdown-message">"${countdown.message}"</div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function startCountdownTimers() {
+        countdowns.forEach(countdown => {
+            updateCountdownTimer(countdown);
+            setInterval(() => updateCountdownTimer(countdown), 1000);
+        });
+    }
+
+    function updateCountdownTimer(countdown) {
+        const targetDate = new Date(countdown.targetDate);
+        const now = new Date();
+        const diffTime = targetDate - now;
+
+        if (diffTime <= 0) {
+            // Countdown finished
+            document.getElementById(`days-${countdown.id}`).textContent = '0';
+            document.getElementById(`hours-${countdown.id}`).textContent = '0';
+            document.getElementById(`minutes-${countdown.id}`).textContent = '0';
+            document.getElementById(`seconds-${countdown.id}`).textContent = '0';
+            return;
+        }
+
+        const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+
+        document.getElementById(`days-${countdown.id}`).textContent = days;
+        document.getElementById(`hours-${countdown.id}`).textContent = hours;
+        document.getElementById(`minutes-${countdown.id}`).textContent = minutes;
+        document.getElementById(`seconds-${countdown.id}`).textContent = seconds;
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('countdownModal');
+        if (e.target === modal) closeCountdownModal();
+    });
+
+    window.openCountdownModal = openCountdownModal;
+    window.closeCountdownModal = closeCountdownModal;
+</script>
+</body>
+</html>
