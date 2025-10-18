@@ -145,6 +145,19 @@
             border-left-color: #4CAF50;
         }
 
+        /* Cancelled Plan */
+        .plan-item.cancelled {
+            opacity: 0.6;
+            background: #fff5f5;
+            border-left-color: #f44336;
+            text-decoration: line-through;
+        }
+
+        .cancel-btn {
+            background: #f44336;
+            color: white;
+        }
+
         .plan-header {
             display: flex;
             justify-content: space-between;
@@ -463,6 +476,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cancelled Plans (full width below) -->
+        <div style="margin-top:20px;">
+            <div class="plan-category">
+                <div class="category-header">
+                    <div class="category-icon">❌</div>
+                    <div class="category-title">Cancelled Plans</div>
+                    <div class="category-stats" id="cancelledStats">0 plans</div>
+                </div>
+                <div class="plans-list" id="cancelledPlans">
+                    <div class="empty-state">
+                        <h3>No cancelled plans</h3>
+                        <p>Cancelled plans will show here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Add Plan Button -->
@@ -656,6 +686,7 @@
                     tinah: author === 'Tinah'    // Auto-approve for creator
                 },
                 completed: false,
+                cancelled: false,
                 createdAt: serverTimestamp()
             };
 
@@ -680,13 +711,16 @@
         
         const upcomingContainer = document.getElementById('upcomingPlans');
         const completedContainer = document.getElementById('completedPlans');
+        const cancelledContainer = document.getElementById('cancelledPlans');
         
-        const upcomingPlans = allPlans.filter(plan => !plan.completed);
+        const upcomingPlans = allPlans.filter(plan => !plan.completed && !plan.cancelled);
         const completedPlans = allPlans.filter(plan => plan.completed);
+        const cancelledPlans = allPlans.filter(plan => plan.cancelled);
         
         // Update stats
         document.getElementById('upcomingStats').textContent = `${upcomingPlans.length} plans`;
         document.getElementById('completedStats').textContent = `${completedPlans.length} goals`;
+        document.getElementById('cancelledStats').textContent = `${cancelledPlans.length} plans`;
         
         // Display upcoming plans
         if (upcomingPlans.length === 0) {
@@ -710,6 +744,18 @@
             `;
         } else {
             completedContainer.innerHTML = completedPlans.map(plan => createPlanHTML(plan)).join('');
+        }
+        
+        // Display cancelled plans
+        if (cancelledPlans.length === 0) {
+            cancelledContainer.innerHTML = `
+                <div class="empty-state">
+                    <h3>No cancelled plans</h3>
+                    <p>Cancelled plans will appear here.</p>
+                </div>
+            `;
+        } else {
+            cancelledContainer.innerHTML = cancelledPlans.map(plan => createPlanHTML(plan)).join('');
         }
     }
 
@@ -748,7 +794,7 @@
         console.log(`   - Show Tinah approve: ${showTinahApprove}`);
         
         return `
-            <div class="plan-item ${plan.completed ? 'completed' : ''}" data-id="${plan.id}">
+            <div class="plan-item ${plan.completed ? 'completed' : ''} ${plan.cancelled ? 'cancelled' : ''}" data-id="${plan.id}">
                 <div class="plan-header">
                     <div>
                         <div class="plan-title">${categoryIcons[plan.category]} ${plan.title}</div>
@@ -788,6 +834,10 @@
                     </button>
                     ` : ''}
                     
+                    ${!plan.cancelled ? `
+                    <button class="action-btn cancel-btn" onclick="cancelPlan('${plan.id}')">Cancel</button>
+                    ` : ''}
+                    
                     ${(showAlbertApprove || showTinahApprove) ? `
                     <button class="action-btn delete-btn" onclick="deletePlan('${plan.id}')">Delete</button>
                     ` : ''}
@@ -795,10 +845,11 @@
                     ${!showAlbertApprove && !showTinahApprove ? `
                     <div style="color: #666; font-size: 0.9em;">
                         ${isFullyApproved ? '✅ Both approved!' : 'Waiting for partner approval...'}
+                        ${plan.cancelled ? ' • ❌ Cancelled' : ''}
                     </div>
                     ` : ''}
                 </div>
-                ` : ''}
+                ` : ''} 
             </div>
         `;
     }
@@ -843,6 +894,17 @@
         }
     }
 
+    async function cancelPlan(planId) {
+        if (!confirm('Are you sure you want to cancel this plan?')) return;
+        try {
+            const planRef = doc(db, 'couplePlans', planId);
+            await updateDoc(planRef, { cancelled: true, completed: false });
+        } catch (error) {
+            console.error("Error cancelling plan: ", error);
+            alert('Error cancelling plan. Please try again.');
+        }
+    }
+
     async function deletePlan(planId) {
         if (confirm('Are you sure you want to delete this plan?')) {
             try {
@@ -869,6 +931,7 @@
     window.toggleCompletion = toggleCompletion;
     window.approvePlan = approvePlan;
     window.deletePlan = deletePlan;
+    window.cancelPlan = cancelPlan;
 </script>
 </body>
 </html>
