@@ -344,6 +344,10 @@
 
         <!-- History Tab -->
         <div class="tab-content" id="history-tab">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                <div style="font-family: 'Dancing Script', cursive; color:var(--accent); font-size:1.1em;">Spin History</div>
+                <button id="clearHistoryBtn" class="delete-btn" title="Clear all spin history">Clear History</button>
+            </div>
             <div class="history-list" id="historyList">
                 <div class="empty-state">
                     <h3>No spin history</h3>
@@ -653,6 +657,42 @@
             }
         }
     };
+    
+    // Clear history button handler
+    document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+        if (!currentUser) { alert('You must be signed in.'); return; }
+        if (!confirm('Are you sure you want to permanently clear ALL spin history?')) return;
+
+        const btn = document.getElementById('clearHistoryBtn');
+        btn.disabled = true;
+        btn.textContent = 'Clearing...';
+
+        try {
+            const q = query(collection(db, 'spinHistory'), where('userId', '==', currentUser.uid));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                alert('No spin history to clear.');
+                return;
+            }
+
+            const deletes = [];
+            snapshot.forEach(docSnap => {
+                deletes.push(deleteDoc(doc(db, 'spinHistory', docSnap.id)));
+            });
+
+            await Promise.all(deletes);
+            // update local state/UI immediately; onSnapshot will also update
+            spinHistory = [];
+            updateHistoryDisplay();
+            alert('Spin history cleared.');
+        } catch (err) {
+            console.error('Error clearing spin history:', err);
+            alert('Failed to clear history. Try again.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Clear History';
+        }
+    });
 
     // Setup real-time updates
     function setupRealtimeUpdates() {
