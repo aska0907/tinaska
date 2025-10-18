@@ -569,7 +569,7 @@
     function setupRealtimeUpdates() {
         const q = query(
             collection(db, 'diaryEntries'),
-            orderBy('createdAt', 'desc')
+            orderBy('date', 'desc')
         );
         
         onSnapshot(q, (snapshot) => {
