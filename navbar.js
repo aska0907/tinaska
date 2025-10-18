@@ -16,6 +16,7 @@ const navbarHTML = `
       <a href="galery.html">📸 Gallery</a>
       <a href="SCHEDULE.HTML">💑 Schedules</a>
       <a href="letters.html">💌 Letters</a>
+      <a href="countdown.html">⏰ Countdown</a>
     </div>
   </div>
 </nav>
