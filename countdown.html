@@ -563,58 +563,50 @@
         }
     });
 
-    // Time Since We Met Timer
+    // Time Since We Met Timer - FIXED CALCULATION
     function startTimeSinceTimer() {
         function updateTimeSince() {
             const now = new Date();
             const diffTime = now - metDate;
             
-            // Calculate total units
-            const totalHours = Math.floor(diffTime / (1000 * 60 * 60));
+            // Calculate total time in each unit (absolute totals since metDate)
+            const totalSeconds = Math.floor(diffTime / 1000);
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const totalHours = Math.floor(totalMinutes / 60);
             const totalDays = Math.floor(totalHours / 24);
             const totalWeeks = Math.floor(totalDays / 7);
-            
-            // Calculate years and remaining months
-            const startYear = metDate.getFullYear();
-            const currentYear = now.getFullYear();
-            let years = currentYear - startYear;
-            
-            const startMonth = metDate.getMonth();
-            const currentMonth = now.getMonth();
-            let months = currentMonth - startMonth;
-            
+
+            // Calculate calendar-aware years and months (keeps "2 months" meaning calendar months)
+            let years = now.getFullYear() - metDate.getFullYear();
+            let months = now.getMonth() - metDate.getMonth();
+
             if (months < 0) {
                 years--;
                 months += 12;
             }
-            
-            // Adjust months if the current day is before the start day
-            const startDay = metDate.getDate();
-            const currentDay = now.getDate();
-            if (currentDay < startDay) {
+
+            // If current day is before the start day in the month, we didn't complete the full month yet
+            if (now.getDate() < metDate.getDate()) {
                 months--;
                 if (months < 0) {
                     years--;
                     months += 12;
                 }
             }
-            
-            // Calculate remaining days after years and months
-            const tempDate = new Date(metDate);
-            tempDate.setFullYear(metDate.getFullYear() + years);
-            tempDate.setMonth(metDate.getMonth() + months);
-            
-            const remainingDays = Math.floor((now - tempDate) / (1000 * 60 * 60 * 24));
-            const remainingWeeks = Math.floor(remainingDays / 7);
-            const remainingDaysAfterWeeks = remainingDays % 7;
-            const remainingHours = totalHours % 24;
+
+            // For weeks/days/hours display we show absolute totals since the start date.
+            // The user requested that days and hours be total counts (not remainders),
+            // so we expose full weeks, total days and total hours since metDate.
+            const displayWeeks = Math.max(0, totalWeeks);
+            const displayDays = Math.max(0, totalDays);
+            const displayHours = Math.max(0, totalHours);
 
             // Update display
-            document.getElementById('yearsSince').textContent = years;
-            document.getElementById('monthsSince').textContent = months;
-            document.getElementById('weeksSince').textContent = remainingWeeks;
-            document.getElementById('daysSince').textContent = remainingDaysAfterWeeks;
-            document.getElementById('hoursSince').textContent = remainingHours;
+            document.getElementById('yearsSince').textContent = Math.max(0, years);
+            document.getElementById('monthsSince').textContent = Math.max(0, months);
+            document.getElementById('weeksSince').textContent = displayWeeks;
+            document.getElementById('daysSince').textContent = displayDays;
+            document.getElementById('hoursSince').textContent = displayHours;
         }
 
         // Update immediately
