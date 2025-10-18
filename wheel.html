@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Idea Wheel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg1: #667eea;
+            --bg2: #764ba2;
+            --accent: #764ba2;
+            --accent-2: #ff6b6b;
+            --card-bg: #ffffff;
+            --muted: #666;
+            --glass: rgba(255,255,255,0.85);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Responsive page background that scales and matches other parts */
+        body {
+            font-family: 'Patrick Hand', cursive;
+            min-height: 100vh;
+            color: #333;
+            padding: 24px;
+            /* layered gradient + subtle pattern for depth, scales on different sizes */
+            background:
+                radial-gradient(1200px 600px at 10% 10%, rgba(255,255,255,0.06), transparent 15%),
+                linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+            background-size: cover;
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Phone-like frame (subtle, shown on narrow screens to match mobile view in other files) */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            transition: all 240ms ease;
+        }
+
+        /* speaker notch for phone feel on small screens */
+        @media (max-width: 700px) {
+            .container {
+                max-width: 420px;
+                margin: 24px auto;
+                border-radius: 36px;
+                padding: 22px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.32);
+                background: linear-gradient(180deg, var(--glass), var(--card-bg));
+                backdrop-filter: blur(6px);
+            }
+            .container:before{
+                content: "";
+                position: absolute;
+                top: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 72px;
+                height: 6px;
+                background: rgba(0,0,0,0.12);
+                border-radius: 6px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            }
+        }
+
+        .header { text-align: center; margin-bottom: 28px; }
+        .header h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .header p { color: var(--muted); font-size: 1.15em; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 22px;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 12px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: white;
+            border-radius: 8px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: transform .18s ease, background .18s ease;
+            border: 2px solid transparent;
+        }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--accent);
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.15em;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Patrick Hand', cursive;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.08em;
+            cursor: pointer;
+            transition: transform 0.18s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+        .submit-btn:hover { transform: translateY(-2px); }
+
+        /* Wheel Section */
+        .wheel-section { text-align: center; padding: 14px; }
+        .date-selector { margin-bottom: 14px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+        .date-select {
+            padding: 10px 14px;
+            border: 2px solid var(--accent);
+            border-radius: 25px;
+            background: white;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.02em;
+        }
+        .spin-btn {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: transform 0.18s ease;
+            font-family: 'Patrick Hand', cursive;
+        }
+        .spin-btn:hover { transform: scale(1.03); }
+        .spin-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Make wheel responsive: use max-width with percentages */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 22px;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #ff6b6b, #667eea, #4CAF50, #FFC107, 
+                #9b59b6, #e74c3c, #3498db, #2ecc71
+            );
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            box-shadow: 0 0 20px rgba(0,0,0,0.22);
+            transform-origin: 50% 50%;
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+        }
+
+        /* Result Section */
+        .result-section {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: center;
+        }
+        .result-title { font-family: 'Dancing Script', cursive; font-size: 1.7em; color: var(--accent); margin-bottom: 6px; }
+        .result-idea { font-size: 1.15em; color: #333; margin-bottom: 6px; }
+        .result-date { color: var(--muted); font-style: italic; }
+
+        /* Lists */
+        .ideas-list, .history-list { max-height: 500px; overflow-y: auto; padding-right:6px; }
+        .date-group { margin-bottom: 20px; }
+        .date-header {
+            background: var(--accent);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.2em;
+        }
+        .idea-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .idea-text { flex: 1; font-size: 1.03em; }
+        .delete-btn {
+            background: var(--accent-2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        /* History */
+        .history-item { background: #f8f9fa; padding: 12px; margin-bottom: 10px; border-radius: 10px; border-left: 4px solid #4CAF50; }
+        .history-date { color: var(--muted); font-size: .92em; margin-bottom: 4px; }
+        .history-selection { font-size: 1.06em; color: #333; margin-bottom: 4px; }
+        .spin-date { color: var(--accent); font-weight: bold; }
+
+        .empty-state { text-align: center; padding: 30px; color: var(--muted); }
+        .empty-state h3 { font-family: 'Dancing Script', cursive; font-size: 1.6em; margin-bottom: 8px; }
+
+        /* Media queries for better phone matching and consistent wheel speed perception */
+        @media (max-width: 900px) {
+            body { padding: 16px; }
+            .header h1 { font-size: 2.4em; }
+            .wheel-container { width: 260px; height: 260px; }
+            .wheel-pointer { top: -16px; width: 34px; height: 34px; }
+            .date-select { font-size: 0.98em; padding: 10px 12px; }
+        }
+
+        @media (max-width: 600px) {
+            .tabs { gap: 6px; padding: 6px; }
+            .tab-btn { padding: 10px; font-size: 0.95em; }
+            .container { padding: 18px; }
+            .wheel-container { width: 220px; height: 220px; margin-bottom: 18px; }
+            .wheel-pointer { top: -14px; width: 30px; height: 30px; }
+            .header h1 { font-size: 2.0em; }
+            .submit-btn, .spin-btn { padding: 10px 18px; font-size: 1em; }
+        }
+
+        @media (max-width: 380px) {
+            .wheel-container { width: 200px; height: 200px; }
+            .header h1 { font-size: 1.8em; }
+            .date-select, .spin-btn { width: 100%; }
+            .date-selector { flex-direction: column; gap: 10px; align-items: stretch; }
+            .container:before { width: 56px; }
+        }
+    </style>
+</head>
+<body>
+     <script src="navbar.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>Daily Idea Wheel 🎡</h1>
+            <p>Add ideas for specific dates and let the wheel decide!</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="spin">Spin Wheel</button>
+            <button class="tab-btn" data-tab="add">Add Idea</button>
+            <button class="tab-btn" data-tab="ideas">View Ideas</button>
+            <button class="tab-btn" data-tab="history">Spin History</button>
+        </div>
+
+        <!-- Spin Wheel Tab -->
+        <div class="tab-content active" id="spin-tab">
+            <div class="wheel-section">
+                <div class="date-selector">
+                    <select class="date-select" id="spinDateSelect">
+                        <option value="">Select a date...</option>
+                    </select>
+                    <button class="spin-btn" id="spinBtn" disabled>Spin the Wheel! 🎡</button>
+                </div>
+
+                <div class="wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel" id="wheel"></div>
+                </div>
+
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <div class="result-title">The wheel chose:</div>
+                    <div class="result-idea" id="resultIdea"></div>
+                    <div class="result-date" id="resultDate"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Idea Tab -->
+        <div class="tab-content" id="add-tab">
+            <form id="ideaForm">
+                <div class="form-group">
+                    <label for="ideaDate">For which date?</label>
+                    <input type="date" id="ideaDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ideaText">What's your idea?</label>
+                    <input type="text" id="ideaText" placeholder="Go to movies, Beach picnic, Romantic dinner..." required>
+                </div>
+
+                <button type="submit" class="submit-btn">Add Idea 💡</button>
+            </form>
+        </div>
+
+        <!-- View Ideas Tab -->
+        <div class="tab-content" id="ideas-tab">
+            <div class="ideas-list" id="ideasList">
+                <div class="empty-state">
+                    <h3>No ideas yet</h3>
+                    <p>Add some ideas to get started!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-content" id="history-tab">
+            <div class="history-list" id="historyList">
+                <div class="empty-state">
+                    <h3>No spin history</h3>
+                    <p>Spin the wheel to see your selections here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { firebaseConfig } from './firebase-config.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        getDocs, 
+        query, 
+        where, 
+        orderBy,
+        onSnapshot,
+        serverTimestamp,
+        deleteDoc,
+        doc 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { 
+        getAuth, 
+        onAuthStateChanged 
+    } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let ideas = [];
+    let spinHistory = [];
+    let isSpinning = false;
+    let accumulatedRotation = 0; // <-- add this
+
+    // Tab functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Update active tab button
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update active tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            // Load data for specific tabs
+            if (tabId === 'ideas') {
+                loadIdeas();
+            } else if (tabId === 'history') {
+                loadHistory();
+            }
+        });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            loadIdeas();
+            loadHistory();
+            setupRealtimeUpdates();
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+
+    // Load ideas
+    async function loadIdeas() {
+        try {
+            const q = query(
+                collection(db, 'dailyIdeas'),
+                where('userId', '==', currentUser.uid),
+                orderBy('date', 'desc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            ideas = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            updateDateSelector();
+            updateIdeasDisplay();
+        } catch (error) {
+            console.error("Error loading ideas: ", error);
+        }
+    }
+
+    // Load spin history
+    async function loadHistory() {
+        try {
+            const q = query(
+                collection(db, 'spinHistory'),
+                where('userId', '==', currentUser.uid),
+                orderBy('spunAt', 'desc')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            spinHistory = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            updateHistoryDisplay();
+        } catch (error) {
+            console.error("Error loading history: ", error);
+        }
+    }
+
+    // Update date selector for spinning
+    function updateDateSelector() {
+        const dateSelect = document.getElementById('spinDateSelect');
+        const uniqueDates = [...new Set(ideas.map(idea => idea.date))].sort();
+        
+        dateSelect.innerHTML = '<option value="">Select a date...</option>';
+        
+        uniqueDates.forEach(date => {
+            const option = document.createElement('option');
+            option.value = date;
+            option.textContent = formatDateDisplay(date);
+            dateSelect.appendChild(option);
+        });
+
+        // Enable/disable spin button based on selection
+        dateSelect.addEventListener('change', function() {
+            document.getElementById('spinBtn').disabled = !this.value;
+        });
+    }
+
+    // Form submission for adding ideas
+    document.getElementById('ideaForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('.submit-btn');
+        submitBtn.textContent = 'Adding...';
+        submitBtn.disabled = true;
+
+        try {
+            const ideaData = {
+                date: document.getElementById('ideaDate').value,
+                text: document.getElementById('ideaText').value,
+                userId: currentUser.uid,
+                createdAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'dailyIdeas'), ideaData);
+            
+            this.reset();
+            alert('Idea added! 💡');
+            
+        } catch (error) {
+            console.error("Error adding idea: ", error);
+            alert('Error adding idea. Please try again.');
+        } finally {
+            submitBtn.textContent = 'Add Idea 💡';
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Spin wheel functionality
+    document.getElementById('spinBtn').addEventListener('click', spinWheel);
+
+    async function spinWheel() {
+        if (isSpinning) return;
+        
+        const selectedDate = document.getElementById('spinDateSelect').value;
+        const dateIdeas = ideas.filter(idea => idea.date === selectedDate);
+
+        if (dateIdeas.length === 0) return;
+
+        isSpinning = true;
+        const spinBtn = document.getElementById('spinBtn');
+        spinBtn.disabled = true;
+        spinBtn.textContent = 'Spinning...';
+
+        const wheel = document.getElementById('wheel');
+        const resultSection = document.getElementById('resultSection');
+
+        // choose random idea first (fair)
+        const randomIndex = Math.floor(Math.random() * dateIdeas.length);
+        const selectedIdea = dateIdeas[randomIndex];
+
+        // compute angle to land on chosen segment
+        const segments = dateIdeas.length;
+        const segmentAngle = 360 / segments;
+        const targetAngle = randomIndex * segmentAngle + segmentAngle / 2;
+
+        // ensure a forward spin: always add many full rotations
+        const rotations = 5 + Math.floor(Math.random() * 5);
+        const rotationDelta = rotations * 360 + (360 - targetAngle) + 90;
+
+        // accumulate so each spin continues forward (avoids backward/short spins)
+        accumulatedRotation += rotationDelta;
+        wheel.style.transform = `rotate(${accumulatedRotation}deg)`;
+
+        // wait for CSS transition to finish (4s in your CSS)
+        setTimeout(async () => {
+            document.getElementById('resultIdea').textContent = selectedIdea.text;
+            document.getElementById('resultDate').textContent = `For ${formatDateDisplay(selectedDate)}`;
+            resultSection.style.display = 'block';
+
+            await addDoc(collection(db, 'spinHistory'), {
+                ideaId: selectedIdea.id,
+                ideaText: selectedIdea.text,
+                date: selectedDate,
+                userId: currentUser.uid,
+                spunAt: serverTimestamp()
+            });
+
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'Spin the Wheel! 🎡';
+            isSpinning = false;
+        }, 4000);
+    }
+
+    // Format date for display
+    function formatDateDisplay(dateString) {
+        const date = new Date(dateString + 'T00:00:00');
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    function updateIdeasDisplay() {
+        const container = document.getElementById('ideasList');
+        
+        if (ideas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No ideas yet</h3>
+                    <p>Add some ideas to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Group ideas by date
+        const ideasByDate = {};
+        ideas.forEach(idea => {
+            if (!ideasByDate[idea.date]) {
+                ideasByDate[idea.date] = [];
+            }
+            ideasByDate[idea.date].push(idea);
+        });
+
+        container.innerHTML = Object.keys(ideasByDate)
+            .sort((a, b) => new Date(b) - new Date(a))
+            .map(date => `
+                <div class="date-group">
+                    <div class="date-header">${formatDateDisplay(date)}</div>
+                    ${ideasByDate[date].map(idea => `
+                        <div class="idea-item">
+                            <div class="idea-text">${idea.text}</div>
+                            <button class="delete-btn" onclick="deleteIdea('${idea.id}')">Delete</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+    }
+
+    function updateHistoryDisplay() {
+        const container = document.getElementById('historyList');
+        
+        if (spinHistory.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No spin history</h3>
+                    <p>Spin the wheel to see your selections here!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = spinHistory.map(history => {
+            const spinDate = history.spunAt?.toDate ? history.spunAt.toDate() : new Date();
+            const formattedSpinDate = spinDate.toLocaleString();
+            
+            return `
+                <div class="history-item">
+                    <div class="history-date">${formattedSpinDate}</div>
+                    <div class="history-selection">${history.ideaText}</div>
+                    <div class="spin-date">For ${formatDateDisplay(history.date)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Delete idea function
+    window.deleteIdea = async function(ideaId) {
+        if (confirm('Are you sure you want to delete this idea?')) {
+            try {
+                await deleteDoc(doc(db, 'dailyIdeas', ideaId));
+                alert('Idea deleted!');
+            } catch (error) {
+                console.error("Error deleting idea: ", error);
+                alert('Error deleting idea. Please try again.');
+            }
+        }
+    };
+
+    // Setup real-time updates
+    function setupRealtimeUpdates() {
+        // Ideas updates
+        const ideasQuery = query(
+            collection(db, 'dailyIdeas'),
+            where('userId', '==', currentUser.uid),
+            orderBy('date', 'desc')
+        );
+        
+        onSnapshot(ideasQuery, (snapshot) => {
+            ideas = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            updateDateSelector();
+            if (document.getElementById('ideas-tab').classList.contains('active')) {
+                updateIdeasDisplay();
+            }
+        });
+
+        // History updates
+        const historyQuery = query(
+            collection(db, 'spinHistory'),
+            where('userId', '==', currentUser.uid),
+            orderBy('spunAt', 'desc')
+        );
+        
+        onSnapshot(historyQuery, (snapshot) => {
+            spinHistory = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            if (document.getElementById('history-tab').classList.contains('active')) {
+                updateHistoryDisplay();
+            }
+        });
+    }
+</script>
+</body>
+</html>
