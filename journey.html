@@ -269,6 +269,112 @@
             margin: 0 2px;
         }
 
+        /* Inline Edit Styles */
+        .edit-form {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border: 1px dashed #ff6b6b;
+        }
+
+        .edit-form input, .edit-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1em;
+        }
+
+        .edit-form textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .save-btn, .cancel-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background-color: #5a6fd8;
+        }
+
+        .cancel-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background-color: #ff5252;
+        }
+
+        .event-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+            gap: 8px;
+        }
+
+        /* smaller pen-only edit button */
+        .edit-btn {
+            background: transparent; /* no background, icon only */
+            border: none;
+            padding: 0;
+            margin: 0 4px;
+            cursor: pointer;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.25em; /* slightly bigger pen */
+            line-height: 1;
+            transition: transform 0.12s ease, color 0.12s ease;
+            color: #764ba2; /* keep visible on white cards */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto;
+            min-width: 0;
+            border-radius: 0;
+        }
+
+        .edit-btn:hover {
+            transform: scale(1.08);
+            color: #5a3f8a;
+        }
+
+        .delete-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff5252;
+        }
+
+        .event-author {
+            font-style: italic;
+            color: #764ba2;
+            font-size: 0.9em;
+        }
+
         @keyframes fadeInUp {
             to {
                 opacity: 1;
@@ -556,9 +662,7 @@
             <!-- Timeline items will be dynamically added here -->
             <div class="empty-state">
                 <h3>No timeline events yet</h3>
-                <p>Click the + button to add your first special moment!</p>
-            </div>
-        </div>
+                <p>Click the + button to add your first special moment
     </div>
 
     <!-- Add Timeline Button -->
@@ -602,7 +706,9 @@
         query, 
         orderBy, 
         serverTimestamp,
-        onSnapshot 
+        onSnapshot,
+        updateDoc,
+        doc
     } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
     import { 
         getAuth, 
@@ -760,6 +866,59 @@
         }
     });
 
+    // Inline Edit Functions
+    function enableEditMode(eventId) {
+        // Hide the display content
+        const displayContent = document.getElementById(`display-${eventId}`);
+        displayContent.style.display = 'none';
+        
+        // Show the edit form
+        const editForm = document.getElementById(`edit-${eventId}`);
+        editForm.style.display = 'block';
+    }
+
+    function cancelEdit(eventId) {
+        // Show the display content
+        const displayContent = document.getElementById(`display-${eventId}`);
+        displayContent.style.display = 'block';
+        
+        // Hide the edit form
+        const editForm = document.getElementById(`edit-${eventId}`);
+        editForm.style.display = 'none';
+    }
+
+    async function saveEdit(eventId) {
+        const editTitle = document.getElementById(`edit-title-${eventId}`).value;
+        const editDescription = document.getElementById(`edit-description-${eventId}`).value;
+        const editDate = document.getElementById(`edit-date-${eventId}`).value;
+
+        if (!editTitle || !editDescription || !editDate) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        try {
+            const eventData = {
+                title: editTitle,
+                description: editDescription,
+                date: editDate,
+                updatedAt: serverTimestamp()
+            };
+
+            await updateDoc(doc(db, 'timelineEvents', eventId), eventData);
+            
+            // Hide the edit form and show display content
+            cancelEdit(eventId);
+            alert('Event updated successfully! 💕');
+            
+        } catch (error) {
+            console.error("Error updating timeline event: ", error);
+            alert('Error updating event. Please try again.');
+        }
+    }
+
+    // deleteEvent removed per request
+
     // Update Timeline Display
     function updateTimeline() {
         console.log('🔄 Updating timeline display with events:', timelineEvents);
@@ -793,11 +952,26 @@
                 <div class="timeline-item" style="animation-delay: ${0.1 * (index + 1)}s">
                     <div class="date-marker">${formattedDate}</div>
                     <div class="timeline-content">
-                        <div class="memory">
+                        <!-- Display Content -->
+                        <div class="memory" id="display-${event.id}">
                             <strong>${event.title}</strong>
                             ${event.author ? `<span class="event-author ${authorClass}">- ${event.author}</span>` : ''}
                             <br>
                             ${event.description}
+                            <div class="event-actions">
+                                <button class="edit-btn" onclick="enableEditMode('${event.id}')" title="Edit">✎</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Edit Form -->
+                        <div class="edit-form" id="edit-${event.id}">
+                            <input type="date" id="edit-date-${event.id}" value="${event.date}">
+                            <input type="text" id="edit-title-${event.id}" value="${event.title}" placeholder="Event Title">
+                            <textarea id="edit-description-${event.id}" placeholder="Event Description">${event.description}</textarea>
+                            <div class="edit-actions">
+                                <button class="cancel-btn" onclick="cancelEdit('${event.id}')">Cancel</button>
+                                <button class="save-btn" onclick="saveEdit('${event.id}')">Save</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -829,6 +1003,9 @@
     // Make functions global for HTML onclick attributes
     window.openTimelineModal = openTimelineModal;
     window.closeTimelineModal = closeTimelineModal;
+    window.enableEditMode = enableEditMode;
+    window.cancelEdit = cancelEdit;
+    window.saveEdit = saveEdit;
 </script>
 </body>
 </html>
