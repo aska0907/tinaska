@@ -19,8 +19,6 @@
             color: #333;
         }
 
-
-
         /* Main Container */
         .container {
             max-width: 1200px;
@@ -172,6 +170,42 @@
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
 
+        /* Memory Actions */
+        .memory-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background-color: #5a6fd8;
+        }
+
+        .delete-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff5252;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -313,19 +347,20 @@
             background: #f0f4ff;
         }
 
-        #media-preview {
+        #media-preview, #edit-media-preview {
             margin-top: 15px;
             display: none;
         }
 
-        #media-preview img, #media-preview video {
+        #media-preview img, #media-preview video, 
+        #edit-media-preview img, #edit-media-preview video {
             max-width: 100%;
             max-height: 150px;
             border-radius: 10px;
         }
 
         /* Submit Button */
-        .submit-btn {
+        .submit-btn, .update-btn {
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #ff6b6b, #764ba2);
@@ -339,7 +374,7 @@
             font-family: 'Patrick Hand', cursive;
         }
 
-        .submit-btn:hover {
+        .submit-btn:hover, .update-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
@@ -485,6 +520,69 @@
         </div>
     </div>
 
+    <!-- Edit Memory Modal -->
+    <div class="modal" id="editMemoryModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditMemoryModal()">×</span>
+            <h2 style="font-family: 'Dancing Script', cursive; color: #764ba2; margin-bottom: 20px; text-align: center;">Edit Memory</h2>
+            
+            <form id="editDiaryEntryForm">
+                <input type="hidden" id="editEntryId">
+                
+                <div class="form-group">
+                    <label>Who's writing?</label>
+                    <div class="author-options" id="editAuthorOptions">
+                        <div class="author-btn" data-author="Albert">Albert</div>
+                        <div class="author-btn" data-author="Tinah">Tinah</div>
+                        <div class="author-btn" data-author="Tinaska">Tinaska</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEntryDate">Date</label>
+                    <input type="date" id="editEntryDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEntryTitle">Memory Title</label>
+                    <input type="text" id="editEntryTitle" placeholder="What makes this moment special?" required>
+                </div>
+
+                <div class="form-group">
+                    <label>How are you feeling?</label>
+                    <div class="mood-options" id="editMoodOptions">
+                        <div class="mood-btn" data-mood="😊">😊</div>
+                        <div class="mood-btn" data-mood="😍">😍</div>
+                        <div class="mood-btn" data-mood="😂">😂</div>
+                        <div class="mood-btn" data-mood="😢">😢</div>
+                        <div class="mood-btn" data-mood="🤩">🤩</div>
+                        <div class="mood-btn" data-mood="😴">😴</div>
+                        <div class="mood-btn" data-mood="🤗">🤗</div>
+                        <div class="mood-btn" data-mood="🥰">🥰</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEntryContent">Your Memory</label>
+                    <textarea id="editEntryContent" placeholder="Write from your heart... 💖" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Update Photo/Video</label>
+                    <div class="media-upload" onclick="document.getElementById('editMediaFile').click()">
+                        <div style="font-size: 2em;">📷</div>
+                        <p>Click to update photo or video</p>
+                        <small>JPG, PNG, MP4, MOV</small>
+                        <input type="file" id="editMediaFile" accept="image/*,video/*" style="display: none;">
+                    </div>
+                    <div id="edit-media-preview"></div>
+                </div>
+
+                <button type="submit" class="update-btn">💾 Update Memory</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Floating Hearts -->
     <div class="floating-hearts">
         <span style="left:10%; animation-delay:0s;">💖</span>
@@ -507,7 +605,10 @@
         query, 
         orderBy, 
         serverTimestamp,
-        onSnapshot 
+        onSnapshot,
+        updateDoc,
+        doc,
+        deleteDoc
     } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
     import { 
         getAuth, 
@@ -517,7 +618,8 @@
         getStorage, 
         ref, 
         uploadBytes, 
-        getDownloadURL 
+        getDownloadURL,
+        deleteObject
     } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
 
     // Initialize Firebase
@@ -531,6 +633,9 @@
     let currentMood = '😊';
     let currentUser = null;
     let entries = [];
+    let selectedFile = null;
+    let editSelectedFile = null;
+    let currentlyEditingId = null;
 
     // Check authentication state
     onAuthStateChanged(auth, (user) => {
@@ -549,7 +654,7 @@
         try {
             const q = query(
                 collection(db, 'diaryEntries'),
-                orderBy('createdAt', 'desc')
+                orderBy('date', 'desc') // <- order by the date field (the date you enter)
             );
             
             const querySnapshot = await getDocs(q);
@@ -569,7 +674,7 @@
     function setupRealtimeUpdates() {
         const q = query(
             collection(db, 'diaryEntries'),
-            orderBy('date', 'desc')
+            orderBy('date', 'desc') // <- realtime ordered by the entry date
         );
         
         onSnapshot(q, (snapshot) => {
@@ -601,6 +706,21 @@
         }
     }
 
+    // Delete file from Firebase Storage
+    async function deleteMediaFile(url) {
+        try {
+            // Create a reference to the file to delete
+            const storageRef = ref(storage, url);
+            
+            // Delete the file
+            await deleteObject(storageRef);
+            return true;
+        } catch (error) {
+            console.error("Error deleting file: ", error);
+            return false;
+        }
+    }
+
     // Modal Functions
     function openMemoryModal() {
         document.getElementById('memoryModal').style.display = 'block';
@@ -613,6 +733,62 @@
         document.getElementById('media-preview').style.display = 'none';
         document.querySelectorAll('.mood-btn')[0].click();
         document.querySelectorAll('.author-btn')[0].click();
+        selectedFile = null;
+    }
+
+    function openEditMemoryModal(entryId) {
+        const entry = entries.find(e => e.id === entryId);
+        if (!entry) return;
+        
+        currentlyEditingId = entryId;
+        
+        // Populate the form with existing data
+        document.getElementById('editEntryId').value = entryId;
+        document.getElementById('editEntryDate').value = entry.date;
+        document.getElementById('editEntryTitle').value = entry.title;
+        document.getElementById('editEntryContent').value = entry.content;
+        
+        // Set the author
+        document.querySelectorAll('#editAuthorOptions .author-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.author === entry.author) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Set the mood
+        document.querySelectorAll('#editMoodOptions .mood-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.mood === entry.mood) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Show existing media if any
+        const preview = document.getElementById('edit-media-preview');
+        if (entry.mediaUrl) {
+            preview.style.display = 'block';
+            if (entry.mediaType && entry.mediaType.startsWith('image/')) {
+                preview.innerHTML = `<img src="${entry.mediaUrl}" alt="Preview"><br>
+                                    <small>Current media - upload new file to replace</small>`;
+            } else if (entry.mediaType && entry.mediaType.startsWith('video/')) {
+                preview.innerHTML = `<video controls><source src="${entry.mediaUrl}" type="${entry.mediaType}"></video><br>
+                                    <small>Current media - upload new file to replace</small>`;
+            }
+        } else {
+            preview.style.display = 'none';
+        }
+        
+        editSelectedFile = null;
+        document.getElementById('editMemoryModal').style.display = 'block';
+    }
+
+    function closeEditMemoryModal() {
+        document.getElementById('editMemoryModal').style.display = 'none';
+        document.getElementById('editDiaryEntryForm').reset();
+        document.getElementById('edit-media-preview').style.display = 'none';
+        currentlyEditingId = null;
+        editSelectedFile = null;
     }
 
     // Author Selection
@@ -621,6 +797,14 @@
             document.querySelectorAll('.author-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             currentAuthor = this.dataset.author;
+        });
+    });
+
+    // Edit Author Selection
+    document.querySelectorAll('#editAuthorOptions .author-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#editAuthorOptions .author-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
         });
     });
 
@@ -633,12 +817,35 @@
         });
     });
 
+    // Edit Mood Selection
+    document.querySelectorAll('#editMoodOptions .mood-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#editMoodOptions .mood-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
     // Media Upload Preview
-    let selectedFile = null;
     document.getElementById('mediaFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         selectedFile = file;
         const preview = document.getElementById('media-preview');
+        
+        if (file) {
+            preview.style.display = 'block';
+            if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview">`;
+            } else if (file.type.startsWith('video/')) {
+                preview.innerHTML = `<video controls><source src="${URL.createObjectURL(file)}" type="${file.type}"></video>`;
+            }
+        }
+    });
+
+    // Edit Media Upload Preview
+    document.getElementById('editMediaFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        editSelectedFile = file;
+        const preview = document.getElementById('edit-media-preview');
         
         if (file) {
             preview.style.display = 'block';
@@ -697,6 +904,92 @@
         }
     });
 
+    // Edit Form Submission
+    document.getElementById('editDiaryEntryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const updateBtn = this.querySelector('.update-btn');
+        const originalText = updateBtn.textContent;
+        updateBtn.textContent = 'Updating...';
+        updateBtn.disabled = true;
+
+        try {
+            const entryId = document.getElementById('editEntryId').value;
+            const entry = entries.find(e => e.id === entryId);
+            if (!entry) throw new Error('Entry not found');
+            
+            let mediaUrl = entry.mediaUrl;
+            let mediaType = entry.mediaType;
+            let oldMediaUrl = null;
+
+            // If a new file is selected, upload it and delete the old one
+            if (editSelectedFile) {
+                oldMediaUrl = mediaUrl; // Store old URL to delete later
+                mediaUrl = await uploadMediaFile(editSelectedFile);
+                mediaType = editSelectedFile.type;
+            }
+
+            // Get selected author and mood
+            const selectedAuthor = document.querySelector('#editAuthorOptions .author-btn.active').dataset.author;
+            const selectedMood = document.querySelector('#editMoodOptions .mood-btn.active').dataset.mood;
+
+            // Update diary entry in Firebase
+            const entryData = {
+                author: selectedAuthor,
+                date: document.getElementById('editEntryDate').value,
+                title: document.getElementById('editEntryTitle').value,
+                mood: selectedMood,
+                content: document.getElementById('editEntryContent').value,
+                mediaUrl: mediaUrl,
+                mediaType: mediaType,
+                updatedAt: serverTimestamp()
+            };
+
+            await updateDoc(doc(db, 'diaryEntries', entryId), entryData);
+            
+            // Delete old media file if it was replaced
+            if (oldMediaUrl && oldMediaUrl !== mediaUrl) {
+                await deleteMediaFile(oldMediaUrl);
+            }
+            
+            closeEditMemoryModal();
+            editSelectedFile = null;
+            alert('Memory updated successfully! 💕');
+            
+        } catch (error) {
+            console.error("Error updating diary entry: ", error);
+            alert('Error updating memory. Please try again.');
+        } finally {
+            updateBtn.textContent = originalText;
+            updateBtn.disabled = false;
+        }
+    });
+
+    // Delete Memory
+    async function deleteMemory(entryId) {
+        if (!confirm('Are you sure you want to delete this memory? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const entry = entries.find(e => e.id === entryId);
+            if (!entry) throw new Error('Entry not found');
+            
+            // Delete media file if exists
+            if (entry.mediaUrl) {
+                await deleteMediaFile(entry.mediaUrl);
+            }
+            
+            // Delete entry from Firestore
+            await deleteDoc(doc(db, 'diaryEntries', entryId));
+            
+            alert('Memory deleted successfully!');
+        } catch (error) {
+            console.error("Error deleting diary entry: ", error);
+            alert('Error deleting memory. Please try again.');
+        }
+    }
+
     // Update Memories Grid
     function updateMemoriesGrid() {
         const container = document.getElementById('memoriesGrid');
@@ -712,8 +1005,9 @@
         }
 
         container.innerHTML = entries.map(entry => {
-            // Convert Firestore timestamp to Date if needed
-            const entryDate = entry.date || (entry.createdAt ? entry.createdAt.toDate() : new Date());
+            // Use the entry's date (from the date input, format YYYY-MM-DD) if present,
+            // otherwise fall back to createdAt timestamp or now.
+            const entryDate = entry.date ? new Date(entry.date) : (entry.createdAt ? entry.createdAt.toDate() : new Date());
             
             return `
                 <div class="memory-card ${entry.author.toLowerCase()}">
@@ -731,7 +1025,7 @@
                     <div class="memory-content">${entry.content}</div>
                     ${entry.mediaUrl ? `
                         <div class="memory-media">
-                            ${entry.mediaType.startsWith('image/') ? 
+                            ${entry.mediaType && entry.mediaType.startsWith('image/') ? 
                                 `<img src="${entry.mediaUrl}" alt="Memory" style="max-width: 100%; max-height: 200px; border-radius: 10px;">` : 
                                 `<video controls style="max-width: 100%; max-height: 200px; border-radius: 10px;">
                                     <source src="${entry.mediaUrl}" type="${entry.mediaType}">
@@ -739,22 +1033,34 @@
                             }
                         </div>
                     ` : ''}
+                    <div class="memory-actions">
+                        <button class="edit-btn" onclick="openEditMemoryModal('${entry.id}')">✏️ Edit</button>
+                        <button class="delete-btn" onclick="deleteMemory('${entry.id}')">🗑️ Delete</button>
+                    </div>
                 </div>
             `;
         }).join('');
     }
 
-    // Close modal when clicking outside
+    // Close modals when clicking outside
     window.addEventListener('click', function(e) {
-        const modal = document.getElementById('memoryModal');
-        if (e.target === modal) {
+        const memoryModal = document.getElementById('memoryModal');
+        const editMemoryModal = document.getElementById('editMemoryModal');
+        
+        if (e.target === memoryModal) {
             closeMemoryModal();
+        }
+        if (e.target === editMemoryModal) {
+            closeEditMemoryModal();
         }
     });
 
     // Make functions global for HTML onclick attributes
     window.openMemoryModal = openMemoryModal;
     window.closeMemoryModal = closeMemoryModal;
+    window.openEditMemoryModal = openEditMemoryModal;
+    window.closeEditMemoryModal = closeEditMemoryModal;
+    window.deleteMemory = deleteMemory;
 </script>
 </body>
 </html>
