@@ -210,6 +210,7 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px dashed #e0e0e0;
+            position: relative;
         }
 
         .letter-author {
@@ -299,6 +300,90 @@
             font-family: 'Dancing Script', cursive;
             font-style: italic;
             color: #666;
+        }
+
+        /* Edit Icon - Subtle and only on hover */
+        .edit-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #764ba2;
+            background: none;
+            border: none;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .letter-card:hover .edit-icon {
+            opacity: 1;
+        }
+
+        .edit-icon:hover {
+            background: rgba(118, 75, 162, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* Inline Edit Form */
+        .edit-form {
+            display: none;
+            margin-top: 15px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            border: 1px dashed #764ba2;
+        }
+
+        .edit-form input, .edit-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1em;
+        }
+
+        .edit-form textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .save-btn, .cancel-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background-color: #5a6fd8;
+        }
+
+        .cancel-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background-color: #ff5252;
         }
 
         /* Modal Styles */
@@ -634,7 +719,9 @@ With all my love," required></textarea>
         query, 
         orderBy,
         onSnapshot,
-        serverTimestamp 
+        serverTimestamp,
+        updateDoc,
+        doc
     } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
     import { 
         getAuth, 
@@ -811,6 +898,55 @@ With all my love," required></textarea>
         updateLettersGrid();
     }
 
+    // Inline Edit Functions
+    function enableEditMode(letterId) {
+        // Hide the display content
+        const displayContent = document.getElementById(`display-${letterId}`);
+        displayContent.style.display = 'none';
+        
+        // Show the edit form
+        const editForm = document.getElementById(`edit-${letterId}`);
+        editForm.style.display = 'block';
+    }
+
+    function cancelEdit(letterId) {
+        // Show the display content
+        const displayContent = document.getElementById(`display-${letterId}`);
+        displayContent.style.display = 'block';
+        
+        // Hide the edit form
+        const editForm = document.getElementById(`edit-${letterId}`);
+        editForm.style.display = 'none';
+    }
+
+    async function saveEdit(letterId) {
+        const editTitle = document.getElementById(`edit-title-${letterId}`).value;
+        const editContent = document.getElementById(`edit-content-${letterId}`).value;
+
+        if (!editTitle || !editContent) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        try {
+            const letterData = {
+                title: editTitle,
+                content: editContent,
+                updatedAt: serverTimestamp()
+            };
+
+            await updateDoc(doc(db, 'loveLetters', letterId), letterData);
+            
+            // Hide the edit form and show display content
+            cancelEdit(letterId);
+            alert('Love letter updated successfully! 💕');
+            
+        } catch (error) {
+            console.error("Error updating love letter: ", error);
+            alert('Error updating letter. Please try again.');
+        }
+    }
+
     function updateLettersGrid() {
         console.log('🔄 Updating letters grid...');
         console.log('👤 Current user:', currentUserName);
@@ -898,26 +1034,44 @@ With all my love," required></textarea>
                             ${letter.author === 'albert' ? '💙 Albert' : '💖 Tinah'}
                         </div>
                         <div class="letter-date">${formattedDate}</div>
+                        ${isMyLetter ? `
+                            <button class="edit-icon" onclick="enableEditMode('${letter.id}')">✏️</button>
+                        ` : ''}
                     </div>
                     
-                    <div class="letter-title">${letter.title}</div>
-                    
-                    <div class="letter-content ${isLong ? 'expandable' : ''}" 
-                         onclick="${isLong ? `toggleExpand('${letter.id}')` : ''}" 
-                         id="content-${letter.id}">
-                        ${displayContent}
+                    <!-- Display Content -->
+                    <div id="display-${letter.id}">
+                        <div class="letter-title">${letter.title}</div>
+                        
+                        <div class="letter-content ${isLong ? 'expandable' : ''}" 
+                             onclick="${isLong ? `toggleExpand('${letter.id}')` : ''}" 
+                             id="content-${letter.id}">
+                            ${displayContent}
+                        </div>
+                        
+                        ${isLong ? `
+                            <div class="read-more" onclick="toggleExpand('${letter.id}')">
+                                Read full letter...
+                            </div>
+                        ` : ''}
+                        
+                        <div class="letter-footer">
+                            <div class="letter-mood">${letter.mood}</div>
+                            <div class="letter-seal">Forever yours</div>
+                        </div>
                     </div>
                     
-                    ${isLong ? `
-                        <div class="read-more" onclick="toggleExpand('${letter.id}')">
-                            Read full letter...
+                    <!-- Edit Form (only for my letters) -->
+                    ${isMyLetter ? `
+                        <div class="edit-form" id="edit-${letter.id}">
+                            <input type="text" id="edit-title-${letter.id}" value="${letter.title}" placeholder="Letter Title">
+                            <textarea id="edit-content-${letter.id}" placeholder="Your love letter...">${letter.content}</textarea>
+                            <div class="edit-actions">
+                                <button class="cancel-btn" onclick="cancelEdit('${letter.id}')">Cancel</button>
+                                <button class="save-btn" onclick="saveEdit('${letter.id}')">Save</button>
+                            </div>
                         </div>
                     ` : ''}
-                    
-                    <div class="letter-footer">
-                        <div class="letter-mood">${letter.mood}</div>
-                        <div class="letter-seal">Forever yours</div>
-                    </div>
                 </div>
             `;
         }).join('').replace(/\n\s*\n/g, '\n');
@@ -957,6 +1111,9 @@ With all my love," required></textarea>
     window.toggleScheduleDate = toggleScheduleDate;
     window.filterLetters = filterLetters;
     window.toggleExpand = toggleExpand;
+    window.enableEditMode = enableEditMode;
+    window.cancelEdit = cancelEdit;
+    window.saveEdit = saveEdit;
 </script>
 </body>
 </html>
