@@ -16,7 +16,7 @@
             font-family: 'Patrick Hand', cursive;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-       
+            overflow-x: hidden;
         }
     /* Navigation */
 .navbar {
@@ -144,6 +144,38 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
+        .timeline-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px auto 20px;
+            color: white;
+            font-size: 1.05em;
+            flex-wrap: wrap;
+        }
+
+        .timeline-controls label {
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .timeline-controls select {
+            padding: 8px 12px;
+            border: 2px solid rgba(255,255,255,0.45);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.18);
+            color: white;
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1em;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .timeline-controls select option {
+            color: #333;
+        }
+
         /* Add Timeline Button */
         .add-timeline-btn {
             position: fixed;
@@ -151,15 +183,19 @@
             right: 30px;
             width: 60px;
             height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: linear-gradient(135deg, #ff6b6b, #764ba2);
             border: none;
             border-radius: 50%;
             color: white;
             font-size: 2em;
+            line-height: 1;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
-            z-index: 100;
+            z-index: 1001;
         }
 
         .add-timeline-btn:hover {
@@ -262,6 +298,22 @@
         .memory {
             color: #333;
             line-height: 1.5;
+        }
+
+        .timeline-photo {
+            display: block;
+            width: 100%;
+            max-height: 320px;
+            margin-top: 14px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f2edf6;
+        }
+
+        .photo-note {
+            margin: -5px 0 10px;
+            color: #666;
+            font-size: 0.86em;
         }
 
         .heart {
@@ -417,6 +469,8 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .close-modal {
@@ -658,15 +712,25 @@
             <p style="color: white;">Chronological journey of our relationship</p>
         </div>
 
+        <div class="timeline-controls">
+            <label for="timelineSort">Sort:</label>
+            <select id="timelineSort" aria-label="Sort timeline">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+            </select>
+        </div>
+
         <div class="timeline" id="timelineContainer">
             <!-- Timeline items will be dynamically added here -->
             <div class="empty-state">
                 <h3>No timeline events yet</h3>
-                <p>Click the + button to add your first special moment
+                <p>Click the + button to add your first special moment!</p>
+            </div>
+        </div>
     </div>
 
     <!-- Add Timeline Button -->
-    <button class="add-timeline-btn" onclick="openTimelineModal()">+</button>
+    <button class="add-timeline-btn" onclick="openTimelineModal()" aria-label="Add timeline event">+</button>
 
     <!-- Add Timeline Event Modal -->
     <div class="modal" id="timelineModal">
@@ -690,6 +754,12 @@
                     <textarea id="eventDescription" placeholder="Tell us about this beautiful memory... 💖" required></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label for="eventPhoto">Photo <span style="font-family: 'Patrick Hand', cursive; font-size: 0.7em;">(optional)</span></label>
+                    <input type="file" id="eventPhoto" accept="image/*">
+                    <p id="eventPhotoNote" class="photo-note">You can add an image up to 10 MB.</p>
+                </div>
+
                 <button type="submit" class="submit-btn">💾 Add to Timeline</button>
             </form>
         </div>
@@ -708,8 +778,10 @@
         serverTimestamp,
         onSnapshot,
         updateDoc,
+        deleteDoc,
         doc
     } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
     import { 
         getAuth, 
         onAuthStateChanged 
@@ -719,12 +791,52 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const storage = getStorage(app);
 
     // Initialize variables
     let timelineEvents = [];
     let currentUser = null;
     let currentUserName = null;
     let currentAuthor = 'albert'; // Default author
+    let timelineSortOrder = 'newest';
+
+    const escapeHtml = (value = '') => String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    const displayText = value => escapeHtml(value).replace(/\n/g, '<br>');
+    const sortTimelineEvents = (events) => {
+        const sorted = [...events];
+        sorted.sort((a, b) => {
+            const aDate = new Date(a.date || 0).getTime();
+            const bDate = new Date(b.date || 0).getTime();
+            return timelineSortOrder === 'oldest' ? aDate - bDate : bDate - aDate;
+        });
+        return sorted;
+    };
+
+    function validatePhoto(file) {
+        if (!file) return null;
+        if (!file.type.startsWith('image/')) return 'Choose an image file.';
+        if (file.size > 10 * 1024 * 1024) return 'Photos must be 10 MB or smaller.';
+        return null;
+    }
+
+    async function uploadTimelinePhoto(file) {
+        const extension = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
+        const path = `timeline-events/${currentUser.uid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file, { contentType: file.type });
+        return { photoPath: path, photoUrl: await getDownloadURL(storageRef) };
+    }
+
+    async function removePhoto(path) {
+        if (!path) return;
+        try { await deleteObject(ref(storage, path)); }
+        catch (error) { console.warn('Could not remove timeline photo:', error); }
+    }
 
     // Check authentication state
     onAuthStateChanged(auth, async (user) => {
@@ -770,10 +882,10 @@
             );
             
             const querySnapshot = await getDocs(q);
-            timelineEvents = querySnapshot.docs.map(doc => ({
+            timelineEvents = sortTimelineEvents(querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })));
             
             console.log('📝 Loaded timeline events:', timelineEvents);
             updateTimeline();
@@ -791,13 +903,19 @@
         );
         
         onSnapshot(q, (snapshot) => {
-            timelineEvents = snapshot.docs.map(doc => ({
+            timelineEvents = sortTimelineEvents(snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })));
             updateTimeline();
         });
     }
+
+    document.getElementById('timelineSort').addEventListener('change', function () {
+        timelineSortOrder = this.value;
+        timelineEvents = sortTimelineEvents(timelineEvents);
+        updateTimeline();
+    });
 
     // Modal Functions
     function openTimelineModal() {
@@ -822,12 +940,19 @@
         try {
             // Get form values
             const date = document.getElementById('eventDate').value;
-            const title = document.getElementById('eventTitle').value;
-            const description = document.getElementById('eventDescription').value;
+            const title = document.getElementById('eventTitle').value.trim();
+            const description = document.getElementById('eventDescription').value.trim();
+            const photoFile = document.getElementById('eventPhoto').files[0];
 
             // Validate required fields
             if (!date || !title || !description) {
                 alert('Please fill in all required fields');
+                return;
+            }
+
+            const photoError = validatePhoto(photoFile);
+            if (photoError) {
+                alert(photoError);
                 return;
             }
 
@@ -838,11 +963,13 @@
                 author: currentAuthor
             });
 
+            const photoData = photoFile ? await uploadTimelinePhoto(photoFile) : {};
             const eventData = {
                 date: date,
                 title: title,
                 description: description,
                 author: currentAuthor, // Use the current logged-in user as author
+                ...photoData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             };
@@ -888,24 +1015,35 @@
     }
 
     async function saveEdit(eventId) {
-        const editTitle = document.getElementById(`edit-title-${eventId}`).value;
-        const editDescription = document.getElementById(`edit-description-${eventId}`).value;
+        const editTitle = document.getElementById(`edit-title-${eventId}`).value.trim();
+        const editDescription = document.getElementById(`edit-description-${eventId}`).value.trim();
         const editDate = document.getElementById(`edit-date-${eventId}`).value;
+        const photoFile = document.getElementById(`edit-photo-${eventId}`).files[0];
 
         if (!editTitle || !editDescription || !editDate) {
             alert('Please fill in all fields');
             return;
         }
 
+        const photoError = validatePhoto(photoFile);
+        if (photoError) {
+            alert(photoError);
+            return;
+        }
+
         try {
+            const event = timelineEvents.find(item => item.id === eventId);
+            const photoData = photoFile ? await uploadTimelinePhoto(photoFile) : {};
             const eventData = {
                 title: editTitle,
                 description: editDescription,
                 date: editDate,
+                ...photoData,
                 updatedAt: serverTimestamp()
             };
 
             await updateDoc(doc(db, 'timelineEvents', eventId), eventData);
+            if (photoData.photoPath && event?.photoPath && event.photoPath !== photoData.photoPath) await removePhoto(event.photoPath);
             
             // Hide the edit form and show display content
             cancelEdit(eventId);
@@ -917,7 +1055,17 @@
         }
     }
 
-    // deleteEvent removed per request
+    async function deleteEvent(eventId) {
+        const event = timelineEvents.find(item => item.id === eventId);
+        if (!event || !confirm('Delete this timeline entry permanently?')) return;
+        try {
+            await deleteDoc(doc(db, 'timelineEvents', eventId));
+            await removePhoto(event.photoPath);
+        } catch (error) {
+            console.error("Error deleting timeline event: ", error);
+            alert('Error deleting event. Please try again.');
+        }
+    }
 
     // Update Timeline Display
     function updateTimeline() {
@@ -944,7 +1092,7 @@
             });
 
             const isEven = index % 2 === 0;
-            const authorClass = event.author ? event.author.toLowerCase() : '';
+            const authorClass = event.author ? event.author.toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
             
             console.log(`📄 Rendering event: ${event.title} by ${event.author}`);
             
@@ -954,20 +1102,24 @@
                     <div class="timeline-content">
                         <!-- Display Content -->
                         <div class="memory" id="display-${event.id}">
-                            <strong>${event.title}</strong>
-                            ${event.author ? `<span class="event-author ${authorClass}">- ${event.author}</span>` : ''}
+                            <strong>${escapeHtml(event.title)}</strong>
+                            ${event.author ? `<span class="event-author ${authorClass}">- ${escapeHtml(event.author)}</span>` : ''}
                             <br>
-                            ${event.description}
+                            ${displayText(event.description)}
+                            ${event.photoUrl ? `<img class="timeline-photo" src="${escapeHtml(event.photoUrl)}" alt="Photo from ${escapeHtml(event.title)}" loading="lazy">` : ''}
                             <div class="event-actions">
                                 <button class="edit-btn" onclick="enableEditMode('${event.id}')" title="Edit">✎</button>
+                                <button class="delete-btn" onclick="deleteEvent('${event.id}')" title="Delete">Delete</button>
                             </div>
                         </div>
                         
                         <!-- Edit Form -->
                         <div class="edit-form" id="edit-${event.id}">
-                            <input type="date" id="edit-date-${event.id}" value="${event.date}">
-                            <input type="text" id="edit-title-${event.id}" value="${event.title}" placeholder="Event Title">
-                            <textarea id="edit-description-${event.id}" placeholder="Event Description">${event.description}</textarea>
+                            <input type="date" id="edit-date-${event.id}" value="${escapeHtml(event.date)}">
+                            <input type="text" id="edit-title-${event.id}" value="${escapeHtml(event.title)}" placeholder="Event Title">
+                            <textarea id="edit-description-${event.id}" placeholder="Event Description">${escapeHtml(event.description)}</textarea>
+                            <input type="file" id="edit-photo-${event.id}" accept="image/*">
+                            <p class="photo-note">${event.photoUrl ? 'Choose a new image only if you want to replace the current photo.' : 'Add an optional image (up to 10 MB).'}</p>
                             <div class="edit-actions">
                                 <button class="cancel-btn" onclick="cancelEdit('${event.id}')">Cancel</button>
                                 <button class="save-btn" onclick="saveEdit('${event.id}')">Save</button>
@@ -1006,6 +1158,7 @@
     window.enableEditMode = enableEditMode;
     window.cancelEdit = cancelEdit;
     window.saveEdit = saveEdit;
+    window.deleteEvent = deleteEvent;
 </script>
 </body>
 </html>

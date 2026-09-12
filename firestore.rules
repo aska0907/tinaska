@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Standard Firebase-authenticated access. This has no dependency on a
+    // couples/tinaska document or on configured member UIDs.
+    match /{document=**} {
+      allow read, write: if signedIn();
+    }
+  }
+}

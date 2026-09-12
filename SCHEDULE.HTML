@@ -259,10 +259,29 @@
             color: white;
         }
 
+        .edit-btn {
+            background: #764ba2;
+            color: white;
+        }
+
         .delete-btn {
             background: #f44336;
             color: white;
         }
+
+        .priority-badge, .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .priority-badge.high { color: #9d1b1b; background: #fee4e2; }
+        .priority-badge.medium { color: #875f00; background: #fff3cd; }
+        .priority-badge.low { color: #1f5f3d; background: #dff5e8; }
+        .status-badge { color: #51415d; background: #eee7f5; }
 
         .action-btn:hover {
             transform: translateY(-2px);
@@ -502,7 +521,7 @@
     <div class="modal" id="planModal">
         <div class="modal-content">
             <span class="close-modal" onclick="closePlanModal()">×</span>
-            <h2 style="font-family: 'Dancing Script', cursive; color: #764ba2; margin-bottom: 20px; text-align: center;">Create New Plan</h2>
+            <h2 id="planModalTitle" style="font-family: 'Dancing Script', cursive; color: #764ba2; margin-bottom: 20px; text-align: center;">Create New Plan</h2>
             
             <form id="planForm">
                 <div class="form-group">
@@ -533,6 +552,24 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="planPriority">Priority</label>
+                    <select id="planPriority" required>
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="planStatus">Status</label>
+                    <select id="planStatus" required>
+                        <option value="upcoming" selected>Upcoming</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div id="planAuthorGroup" class="form-group">
                     <label>Created by</label>
                     <div style="display: flex; gap: 10px;">
                         <label style="display: flex; align-items: center; gap: 5px;">
@@ -586,6 +623,7 @@
     let allPlans = [];
     let currentUser = null;
     let currentUserName = null;
+    let editingPlanId = null;
 
     // Check authentication
     onAuthStateChanged(auth, async (user) => {
@@ -655,13 +693,44 @@
 
     // Modal Functions
     function openPlanModal() {
+        editingPlanId = null;
+        document.getElementById('planForm').reset();
+        document.getElementById('planModalTitle').textContent = 'Create New Plan';
+        document.getElementById('planAuthorGroup').style.display = 'block';
+        document.querySelector('#planForm .submit-btn').textContent = '💾 Create Plan';
         document.getElementById('planModal').style.display = 'block';
         document.getElementById('planDate').valueAsDate = new Date();
+        document.getElementById('planPriority').value = 'medium';
+        document.getElementById('planStatus').value = 'upcoming';
     }
 
     function closePlanModal() {
         document.getElementById('planModal').style.display = 'none';
         document.getElementById('planForm').reset();
+        editingPlanId = null;
+    }
+
+    function planStatus(plan) {
+        if (plan.cancelled) return 'cancelled';
+        if (plan.completed) return 'completed';
+        return ['upcoming', 'completed', 'cancelled'].includes(plan.status) ? plan.status : 'upcoming';
+    }
+
+    function openEditPlanModal(planId) {
+        const plan = allPlans.find(item => item.id === planId);
+        if (!plan) return;
+
+        editingPlanId = planId;
+        document.getElementById('planModalTitle').textContent = 'Edit Plan';
+        document.getElementById('planTitle').value = plan.title || '';
+        document.getElementById('planDate').value = plan.date || '';
+        document.getElementById('planCategory').value = plan.category || 'other';
+        document.getElementById('planDescription').value = plan.description || '';
+        document.getElementById('planPriority').value = ['low', 'medium', 'high'].includes(plan.priority) ? plan.priority : 'medium';
+        document.getElementById('planStatus').value = planStatus(plan);
+        document.getElementById('planAuthorGroup').style.display = 'none';
+        document.querySelector('#planForm .submit-btn').textContent = 'Save Changes';
+        document.getElementById('planModal').style.display = 'block';
     }
 
     // Form Submission
@@ -669,35 +738,48 @@
         e.preventDefault();
         
         const submitBtn = this.querySelector('.submit-btn');
-        submitBtn.textContent = 'Creating...';
+        const isEditing = Boolean(editingPlanId);
+        submitBtn.textContent = isEditing ? 'Saving...' : 'Creating...';
         submitBtn.disabled = true;
 
         try {
-            const author = document.querySelector('input[name="author"]:checked').value;
-            
+            const status = document.getElementById('planStatus').value;
             const planData = {
-                title: document.getElementById('planTitle').value,
+                title: document.getElementById('planTitle').value.trim(),
                 date: document.getElementById('planDate').value,
                 category: document.getElementById('planCategory').value,
-                description: document.getElementById('planDescription').value,
-                author: author,
-                approved: { 
-                    albert: author === 'Albert', // Auto-approve for creator
-                    tinah: author === 'Tinah'    // Auto-approve for creator
-                },
-                completed: false,
-                cancelled: false,
-                createdAt: serverTimestamp()
+                description: document.getElementById('planDescription').value.trim(),
+                priority: document.getElementById('planPriority').value,
+                status: status,
+                completed: status === 'completed',
+                cancelled: status === 'cancelled'
             };
 
-            await addDoc(collection(db, 'couplePlans'), planData);
+            if (isEditing) {
+                await updateDoc(doc(db, 'couplePlans', editingPlanId), {
+                    ...planData,
+                    updatedAt: serverTimestamp()
+                });
+                alert('Plan updated successfully!');
+            } else {
+                const author = document.querySelector('input[name="author"]:checked').value;
+                await addDoc(collection(db, 'couplePlans'), {
+                    ...planData,
+                    author: author,
+                    approved: {
+                        albert: author === 'Albert', // Auto-approve for creator
+                        tinah: author === 'Tinah'    // Auto-approve for creator
+                    },
+                    createdAt: serverTimestamp()
+                });
+                alert('Plan created successfully! 💕');
+            }
             
             closePlanModal();
-            alert('Plan created successfully! 💕');
             
         } catch (error) {
-            console.error("Error creating plan: ", error);
-            alert('Error creating plan. Please try again.');
+            console.error("Error saving plan: ", error);
+            alert('Error saving plan. Please try again.');
         } finally {
             submitBtn.textContent = '💾 Create Plan';
             submitBtn.disabled = false;
@@ -776,8 +858,11 @@
             home: '🏠',
             other: '🌟'
         };
+        const approvals = plan.approved || { albert: false, tinah: false };
+        const status = planStatus(plan);
+        const priority = ['low', 'medium', 'high'].includes(plan.priority) ? plan.priority : 'medium';
         
-        const isFullyApproved = plan.approved.albert && plan.approved.tinah;
+        const isFullyApproved = approvals.albert && approvals.tinah;
         
         // Debug logging for approval logic
         console.log(`🔍 Checking plan: "${plan.title}"`);
@@ -787,8 +872,8 @@
         console.log(`   - Tinah approved: ${plan.approved.tinah}`);
         
         // Determine which approval buttons to show based on current user
-        const showAlbertApprove = currentUserName === 'Albert' && !plan.approved.albert && plan.author !== 'Albert';
-        const showTinahApprove = currentUserName === 'Tinah' && !plan.approved.tinah && plan.author !== 'Tinah';
+        const showAlbertApprove = currentUserName === 'Albert' && !approvals.albert && plan.author !== 'Albert';
+        const showTinahApprove = currentUserName === 'Tinah' && !approvals.tinah && plan.author !== 'Tinah';
         
         console.log(`   - Show Albert approve: ${showAlbertApprove}`);
         console.log(`   - Show Tinah approve: ${showTinahApprove}`);
@@ -797,7 +882,7 @@
             <div class="plan-item ${plan.completed ? 'completed' : ''} ${plan.cancelled ? 'cancelled' : ''}" data-id="${plan.id}">
                 <div class="plan-header">
                     <div>
-                        <div class="plan-title">${categoryIcons[plan.category]} ${plan.title}</div>
+                        <div class="plan-title">${categoryIcons[plan.category] || '🌟'} ${plan.title}</div>
                         <div class="plan-date">${formattedDate}</div>
                     </div>
                     <div class="completion-check" onclick="toggleCompletion('${plan.id}')">
@@ -813,43 +898,42 @@
                 <div class="plan-meta">
                     <div class="plan-author ${plan.author.toLowerCase()}">By ${plan.author}</div>
                     <div class="plan-status">
+                        <span class="priority-badge ${priority}">${priority} priority</span>
+                        <span class="status-badge">${status}</span>
                         <div class="approval-status">
-                            <div class="approval-dot ${plan.approved.albert ? 'approved' : 'pending'}" title="${plan.approved.albert ? 'Albert approved' : 'Albert pending'}"></div>
-                            <div class="approval-dot ${plan.approved.tinah ? 'approved' : 'pending'}" title="${plan.approved.tinah ? 'Tinah approved' : 'Tinah pending'}"></div>
+                            <div class="approval-dot ${approvals.albert ? 'approved' : 'pending'}" title="${approvals.albert ? 'Albert approved' : 'Albert pending'}"></div>
+                            <div class="approval-dot ${approvals.tinah ? 'approved' : 'pending'}" title="${approvals.tinah ? 'Tinah approved' : 'Tinah pending'}"></div>
                         </div>
                     </div>
                 </div>
                 
-                ${!plan.completed ? `
                 <div class="plan-actions">
-                    ${showAlbertApprove ? `
+                    ${!plan.completed && showAlbertApprove ? `
                     <button class="action-btn approve-btn" onclick="approvePlan('${plan.id}', 'albert')">
                         Albert Approve
                     </button>
                     ` : ''}
                     
-                    ${showTinahApprove ? `
+                    ${!plan.completed && showTinahApprove ? `
                     <button class="action-btn approve-btn" onclick="approvePlan('${plan.id}', 'tinah')">
                         Tinah Approve
                     </button>
                     ` : ''}
                     
-                    ${!plan.cancelled ? `
+                    ${!plan.completed && !plan.cancelled ? `
                     <button class="action-btn cancel-btn" onclick="cancelPlan('${plan.id}')">Cancel</button>
                     ` : ''}
                     
-                    ${(showAlbertApprove || showTinahApprove) ? `
+                    <button class="action-btn edit-btn" onclick="openEditPlanModal('${plan.id}')">Edit</button>
                     <button class="action-btn delete-btn" onclick="deletePlan('${plan.id}')">Delete</button>
-                    ` : ''}
                     
-                    ${!showAlbertApprove && !showTinahApprove ? `
+                    ${!plan.completed && !showAlbertApprove && !showTinahApprove ? `
                     <div style="color: #666; font-size: 0.9em;">
                         ${isFullyApproved ? '✅ Both approved!' : 'Waiting for partner approval...'}
                         ${plan.cancelled ? ' • ❌ Cancelled' : ''}
                     </div>
                     ` : ''}
                 </div>
-                ` : ''} 
             </div>
         `;
     }
@@ -860,8 +944,10 @@
             const plan = allPlans.find(p => p.id === planId);
             if (plan) {
                 const planRef = doc(db, 'couplePlans', planId);
+                const completed = !plan.completed;
                 await updateDoc(planRef, {
-                    completed: !plan.completed
+                    completed: completed,
+                    status: completed ? 'completed' : (plan.cancelled ? 'cancelled' : 'upcoming')
                 });
             }
         } catch (error) {
@@ -898,7 +984,7 @@
         if (!confirm('Are you sure you want to cancel this plan?')) return;
         try {
             const planRef = doc(db, 'couplePlans', planId);
-            await updateDoc(planRef, { cancelled: true, completed: false });
+            await updateDoc(planRef, { cancelled: true, completed: false, status: 'cancelled' });
         } catch (error) {
             console.error("Error cancelling plan: ", error);
             alert('Error cancelling plan. Please try again.');
@@ -927,6 +1013,7 @@
 
     // Make functions available globally
     window.openPlanModal = openPlanModal;
+    window.openEditPlanModal = openEditPlanModal;
     window.closePlanModal = closePlanModal;
     window.toggleCompletion = toggleCompletion;
     window.approvePlan = approvePlan;

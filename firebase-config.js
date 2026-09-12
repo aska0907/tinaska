@@ -12,5 +12,9 @@ const firebaseConfig = {
   measurementId: "G-NNPYYNXLDV"
 };
 
+// This is a fixed data-path identifier, not a password or a configuration
+// requirement. Existing Firebase email/password accounts sign in normally.
+const COUPLE_ID = 'tinaska';
+
 // Export the configuration
-export { firebaseConfig };
+export { firebaseConfig, COUPLE_ID };

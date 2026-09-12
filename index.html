@@ -1,389 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Love Diary - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Patrick Hand', cursive;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 25px;
-            padding: 50px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            position: relative;
-            border: 3px solid rgba(255,255,255,0.3);
-        }
-
-        .logo {
-            font-family: 'Dancing Script', cursive;
-            font-size: 3.5em;
-            color: #764ba2;
-            margin-bottom: 10px;
-        }
-
-        .logo span {
-            color: #ff6b6b;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 1.2em;
-            margin-bottom: 40px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #764ba2;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            font-size: 1.1em;
-            font-family: 'Patrick Hand', cursive;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #764ba2;
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #ff6b6b, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 15px;
-            font-size: 1.3em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Patrick Hand', cursive;
-            margin-bottom: 20px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        .toggle-form {
-            color: #666;
-            font-size: 1em;
-        }
-
-        .toggle-form a {
-            color: #764ba2;
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .toggle-form a:hover {
-            text-decoration: underline;
-        }
-
-        .message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .couple-names {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-            color: #764ba2;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        /* Floating Hearts */
-        .floating-hearts {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .floating-hearts span {
-            position: absolute;
-            font-size: 24px;
-            opacity: 0.3;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Love Diary - Sign in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; padding: 20px; display: grid; place-items: center; overflow: hidden; font-family: 'Patrick Hand', cursive; background: linear-gradient(135deg, #667eea, #764ba2); }
+    .login-container { position: relative; z-index: 1; width: min(100%, 450px); padding: 48px; text-align: center; border: 3px solid rgba(255,255,255,.3); border-radius: 25px; background: rgba(255,255,255,.95); box-shadow: 0 15px 35px rgba(0,0,0,.2); backdrop-filter: blur(10px); }
+    .logo { margin-bottom: 10px; color: #764ba2; font-family: 'Dancing Script', cursive; font-size: clamp(2.8rem, 9vw, 3.5rem); }
+    .subtitle, .access-note { color: #666; font-size: 1.15rem; }
+    .subtitle { margin-bottom: 32px; }
+    .access-note { margin-top: 20px; line-height: 1.4; }
+    .form-group { margin-bottom: 22px; text-align: left; }
+    label { display: block; margin-bottom: 8px; color: #764ba2; font-size: 1.1rem; font-weight: bold; }
+    input { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 15px; background: #fafafa; font: 1.1rem 'Patrick Hand', cursive; }
+    input:focus { outline: none; border-color: #764ba2; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,.1); }
+    .login-btn { width: 100%; padding: 18px; border: 0; border-radius: 15px; cursor: pointer; color: #fff; background: linear-gradient(135deg, #ff6b6b, #764ba2); font: bold 1.25rem 'Patrick Hand', cursive; transition: transform .2s, box-shadow .2s; }
+    .login-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+    .login-btn:disabled { cursor: wait; opacity: .7; }
+    .message { display: none; margin-bottom: 20px; padding: 14px; border-radius: 10px; font-weight: bold; }
+    .message.success { display: block; color: #155724; border: 1px solid #c3e6cb; background: #d4edda; }
+    .message.error { display: block; color: #721c24; border: 1px solid #f5c6cb; background: #f8d7da; }
+    .couple-names { display: flex; justify-content: center; gap: 30px; margin-top: 20px; color: #764ba2; font-size: 1.1rem; font-weight: bold; }
+    .hearts { position: fixed; inset: 0; pointer-events: none; }
+    .hearts span { position: absolute; font-size: 24px; opacity: .28; animation: float 6s ease-in-out infinite; }
+    @keyframes float { 50% { transform: translateY(-20px) rotate(180deg); } }
+    @media (max-width: 480px) { .login-container { padding: 34px 24px; } }
+  </style>
 </head>
 <body>
-    <!-- Floating Hearts -->
-    <div class="floating-hearts">
-        <span style="left:10%; animation-delay:0s;">💖</span>
-        <span style="left:20%; animation-delay:1s;">💕</span>
-        <span style="left:30%; animation-delay:2s;">❤️</span>
-        <span style="left:40%; animation-delay:3s;">💗</span>
-        <span style="left:60%; animation-delay:4s;">💓</span>
-        <span style="left:80%; animation-delay:5s;">💝</span>
-    </div>
+  <div class="hearts" aria-hidden="true">
+    <span style="left:10%;top:15%;animation-delay:0s">&#9829;</span>
+    <span style="left:24%;top:70%;animation-delay:1s">&#9829;</span>
+    <span style="left:72%;top:20%;animation-delay:2s">&#9829;</span>
+    <span style="left:87%;top:76%;animation-delay:3s">&#9829;</span>
+  </div>
 
-    <div class="login-container">
-        <div class="logo">Tinaska's Diary</div>
-        <div class="subtitle">Our private love story 💕</div>
+  <main class="login-container">
+    <h1 class="logo">Tinaska's Diary</h1>
+    <p class="subtitle">Our private love story</p>
+    <div id="message" class="message" role="alert"></div>
 
-        <div id="message" class="message" style="display: none;"></div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="email" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Password" required>
+      </div>
+      <button type="submit" class="login-btn">Enter our diary</button>
+    </form>
 
-        <!-- Login Form -->
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" placeholder="your@email.com" required>
-            </div>
+    <p class="access-note">Sign in with your email and password.</p>
+    <div class="couple-names"><span>Albert</span><span>Tinah</span></div>
+  </main>
 
-            <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" required>
-            </div>
+  <script type="module">
+    import { auth } from './app-core.js';
+    import { onAuthStateChanged, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 
-            <button type="submit" class="login-btn">💕 Enter Our Diary</button>
-        </form>
-
-        <!-- Register Form (Hidden by default) -->
-        <form id="registerForm" style="display: none;">
-            <div class="form-group">
-                <label for="registerEmail">Email</label>
-                <input type="email" id="registerEmail" placeholder="your@email.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="registerPassword">Password</label>
-                <input type="password" id="registerPassword" placeholder="••••••••" required>
-            </div>
-
-            <div class="form-group">
-                <label for="registerName">Your Name</label>
-                <input type="text" id="registerName" placeholder="Albert or Tinah" required>
-            </div>
-
-            <div class="form-group">
-                <label for="secretCode">Secret Love Code</label>
-                <input type="password" id="secretCode" placeholder="Our special code..." required>
-            </div>
-
-            <button type="submit" class="login-btn">💑 Start Our Journey</button>
-        </form>
-
-        <div class="toggle-form">
-            <span id="toggleText">Don't have access? </span>
-            <a id="toggleLink" onclick="toggleForms()">Request to join our love story</a>
-        </div>
-
-        <div class="couple-names">
-            <div>💙 Albert</div>
-            <div>💖 Tinah</div>
-        </div>
-    </div>
-
-    <!-- Firebase and App Scripts -->
-    <script type="module">
-        // Import Firebase config and functions
-        import { firebaseConfig } from './firebase-config.js';
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword 
-        } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        // Secret code - only you two know this!
-        const SECRET_LOVE_CODE = "TinaskaForever2025"; // You can change this to anything you want
-
-        // Form elements
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const toggleText = document.getElementById('toggleText');
-        const toggleLink = document.getElementById('toggleLink');
-        const messageDiv = document.getElementById('message');
-
-        // Toggle between login and register forms
-        window.toggleForms = function() {
-            const isLoginVisible = loginForm.style.display !== 'none';
-            
-            if (isLoginVisible) {
-                // Switch to register
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                toggleText.textContent = 'Already part of our story? ';
-                toggleLink.textContent = 'Sign in to our diary';
-            } else {
-                // Switch to login
-                registerForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                toggleText.textContent = 'Don\'t have access? ';
-                toggleLink.textContent = 'Request to join our love story';
-            }
-            messageDiv.style.display = 'none';
-        }
-
-        // Show message
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
-
-        // Login form submission
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                showMessage('Welcome back to our love story! 💕', 'success');
-                
-                // Redirect to diary after successful login
-                setTimeout(() => {
-                    window.location.href = 'diary.html';
-                }, 1500);
-                
-            } catch (error) {
-                let errorMessage = 'Invalid email or password';
-                if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Please enter a valid email address';
-                } else if (error.code === 'auth/user-not-found') {
-                    errorMessage = 'No account found with this email';
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMessage = 'Incorrect password';
-                }
-                showMessage(errorMessage, 'error');
-            }
-        });
-
-        // Register form submission
-import { updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-
-registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const name = document.getElementById('registerName').value;
-    const secretCode = document.getElementById('secretCode').value;
-
-    // Validate name (only Albert or Tinah allowed)
-    const validNames = ['albert', 'tinah'];
-    if (!validNames.includes(name.toLowerCase())) {
-        showMessage('Please enter either "Albert" or "Tinah" as your name', 'error');
-        return;
+    const form = document.getElementById('loginForm');
+    const message = document.getElementById('message');
+    const submitButton = form.querySelector('button');
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = `message ${type}`;
     }
 
-    // Validate secret code
-    if (secretCode !== SECRET_LOVE_CODE) {
-        showMessage('Invalid secret code. This diary is only for us 💕', 'error');
-        return;
-    }
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      submitButton.disabled = true;
+      submitButton.textContent = 'Signing in...';
+      try {
+        await signInWithEmailAndPassword(auth, form.loginEmail.value.trim(), form.loginPassword.value);
+        showMessage('Welcome back to our love story.', 'success');
+      } catch (error) {
+        const friendly = error.code === 'auth/invalid-email' ? 'Please enter a valid email address.' : 'Invalid email or password.';
+        showMessage(friendly, 'error');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enter our diary';
+      }
+    });
 
-    try {
-        // Create user with email & password
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Update displayName in Firebase Auth
-        await updateProfile(userCredential.user, {
-            displayName: name
-        });
-
-        showMessage('Welcome to our love story! 💑 You can now sign in.', 'success');
-        
-        // Switch back to login form
-        setTimeout(() => {
-            toggleForms();
-            registerForm.reset();
-        }, 2000);
-        
-    } catch (error) {
-        let errorMessage = 'Error creating account';
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = 'This email is already registered';
-        } else if (error.code === 'auth/weak-password') {
-            errorMessage = 'Password should be at least 6 characters';
-        } else if (error.code === 'auth/invalid-email') {
-            errorMessage = 'Please enter a valid email address';
-        }
-        showMessage(errorMessage, 'error');
-    }
-});
-
-
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in, redirect to diary
-                window.location.href = 'diary.html';
-            }
-        });
-    </script>
+    // Firebase Authentication alone controls access here. No Firestore setup
+    // document or member UID configuration is required to sign in.
+    onAuthStateChanged(auth, user => {
+      if (user) window.location.href = 'diary.html';
+    });
+  </script>
 </body>
 </html>
